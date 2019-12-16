@@ -1,0 +1,11 @@
+F:\0.Document\NetCore3.1\KPI\Service\bin\Debug\netcoreapp3.1\Service.deps.json
+F:\0.Document\NetCore3.1\KPI\Service\bin\Debug\netcoreapp3.1\Service.dll
+F:\0.Document\NetCore3.1\KPI\Service\bin\Debug\netcoreapp3.1\Service.pdb
+F:\0.Document\NetCore3.1\KPI\Service\bin\Debug\netcoreapp3.1\Models.dll
+F:\0.Document\NetCore3.1\KPI\Service\bin\Debug\netcoreapp3.1\Models.pdb
+F:\0.Document\NetCore3.1\KPI\Service\obj\Debug\netcoreapp3.1\Service.csprojAssemblyReference.cache
+F:\0.Document\NetCore3.1\KPI\Service\obj\Debug\netcoreapp3.1\Service.AssemblyInfoInputs.cache
+F:\0.Document\NetCore3.1\KPI\Service\obj\Debug\netcoreapp3.1\Service.AssemblyInfo.cs
+F:\0.Document\NetCore3.1\KPI\Service\obj\Debug\netcoreapp3.1\Service.csproj.CopyComplete
+F:\0.Document\NetCore3.1\KPI\Service\obj\Debug\netcoreapp3.1\Service.dll
+F:\0.Document\NetCore3.1\KPI\Service\obj\Debug\netcoreapp3.1\Service.pdb
