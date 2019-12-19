@@ -41,7 +41,7 @@ namespace API.Controllers
         {
             return Ok(await _levelService.AddOrUpdate(entity));
         }
-        [HttpGet("{id}", Name = "GetByID")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetByID(int id)
         {
             //string Code = OkConvert.SerializeObject(code);
@@ -63,7 +63,7 @@ namespace API.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns>True or False</returns>
-        [HttpGet]
+        [HttpGet("{id}")]
         public async Task<IActionResult> Remove(int id)
         {
             //string Code = OkConvert.SerializeObject(code);

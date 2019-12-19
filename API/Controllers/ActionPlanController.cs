@@ -22,12 +22,12 @@ namespace API.Controllers
         }
 
         // GET: ActionPlan/GetActionPlanByCategory
-        public async Task<IActionResult> GetAllById(int? catid)
+        [HttpGet("{catid}")]
+        public async Task<IActionResult> GetAllById(int catid)
         {
-
-            return Ok(await _actionPlanService.GetAllById(catid ?? 0));
+            return Ok(await _actionPlanService.GetAllById(catid));
         }
-
+        [HttpGet]
         public async Task<IActionResult> GetAllCategory()
         {
 

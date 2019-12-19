@@ -14,7 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Service;
 using API.Dtos;
-using Service.helpers;
+using Service.Helpers;
 using API.Helpers;
 using AutoMapper;
 

@@ -3,6 +3,7 @@ using Models.EF;
 using Microsoft.AspNetCore.Mvc;
 using Service;
 using System.Threading.Tasks;
+using API.Helpers;
 
 namespace API.Controllers
 {
@@ -23,13 +24,15 @@ namespace API.Controllers
             _categoryService = categoryService;
         }
         // GET: CategoryKPILevelAdmin
-         [HttpGet]
-        public async Task<IActionResult> GetAllCategories(int page, int pageSize, int level,int ocID)
+        [HttpGet("{ocID}/{level}")]
+        [HttpGet("{ocID}/{level}/{page}/{pageSize}")]
+        public async Task<IActionResult> GetAllCategories(int level,int ocID, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _categoryService.GetAllByCategory(page, pageSize, level, ocID));
         }
+        [HttpGet("{page}/{pageSize}")]
         [HttpGet]
-        public async Task<IActionResult> GetAllKPIlevels(int page, int pageSize)
+        public async Task<IActionResult> GetAllKPIlevels(int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _kPILevelService.GetAll(page, pageSize));
         }
@@ -38,8 +41,9 @@ namespace API.Controllers
         {
             return Ok(await _categoryKPILevelService.Add(entity));
         }
-        [HttpGet]
-        public async Task<IActionResult> GetAllKPILevelByCategory(int category, int page, int pageSize)
+        [HttpGet("{category}")]
+        [HttpGet("{category}/{page}/{pageSize}")]
+        public async Task<IActionResult> GetAllKPILevelByCategory(int category, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _categoryKPILevelService.LoadKPILevel(category, page, pageSize));
 

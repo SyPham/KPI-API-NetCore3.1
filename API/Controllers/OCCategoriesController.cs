@@ -1,5 +1,6 @@
 ﻿
 
+using API.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Service;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ namespace API.Controllers
             _categoryService = categoryService;
         }
      
+        [HttpPost]
         public async Task<IActionResult> AddOCCategory(int OCID, int CategoryID)
         {
             return Ok(await _OCCategoryService.AddOCCategory(OCID, CategoryID));
@@ -44,7 +46,9 @@ namespace API.Controllers
         /// <param name="level">Cấp bậc của OC </param>
         /// <param name="ocID"></param>
         /// <returns></returns>
-        public async Task<IActionResult> GetCategoryByOC(int page, int pageSize, int level, int ocID)
+        [HttpGet("{level}/{ocID}")]
+        [HttpGet("{level}/{ocID}/{page}/{pageSize}")]
+        public async Task<IActionResult> GetCategoryByOC(int level, int ocID, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _categoryService.GetCategoryByOC(page, pageSize, level, ocID));
         }
@@ -53,6 +57,7 @@ namespace API.Controllers
         /// Lấy tất cả danh sách OC theo Tree View
         /// </summary>
         /// <returns></returns>
+        [HttpGet]
         public async Task<IActionResult> GetListTree()
         {
             return Ok(await _levelService.GetListTree());

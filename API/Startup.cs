@@ -28,6 +28,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Logging;
 using AutoMapper;
 using Newtonsoft.Json.Serialization;
+using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.OpenApi.Models;
 
 namespace API
 {
@@ -46,7 +48,7 @@ namespace API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
+           
             // configure strongly typed settings objects
             var appSettingsSection = Configuration.GetSection("AppSettings");
             services.Configure<Helpers.AppSettings>(appSettingsSection);
@@ -55,6 +57,11 @@ namespace API
             services.AddControllers().AddNewtonsoftJson(options =>
             {
                 options.SerializerSettings.ContractResolver = new DefaultContractResolver();
+            });
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+                c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
             });
             var conn = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<DataContext>(x => x.UseSqlServer(conn));
@@ -97,11 +104,24 @@ namespace API
             services.AddScoped<IOCCategoryService, OCCategoryService>();
             services.AddScoped<ISettingService, SettingService>();
             services.AddScoped<IUnitService, UnitService>();
+
+          
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseStaticFiles();
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+            // specifying the Swagger JSON endpoint.
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "KPI System");
+                c.RoutePrefix = string.Empty;
+            });
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -124,9 +144,10 @@ namespace API
                 });
                 // app.UseHsts();
             }
+           
+
+
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
-            IdentityModelEventSource.ShowPII = true;
             app.UseRouting();
 
             // global cors policy

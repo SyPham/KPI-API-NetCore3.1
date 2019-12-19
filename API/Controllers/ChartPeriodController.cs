@@ -6,7 +6,7 @@ using Service;
 using System.Threading.Tasks;
 using API.Helpers;
 using System.Linq;
-using Service.helpers;
+using Service.Helpers;
 using API.SignalR;
 using System.Collections.Generic;
 using Models.ViewModels.ActionPlan;
@@ -61,6 +61,7 @@ namespace API.Controllers
             return Ok(model);
         }
 
+        [HttpPost]
         public async Task<IActionResult> AddComment(AddCommentViewModel entity)
         {
             string token = Request.Headers["Authorization"];
@@ -80,34 +81,43 @@ namespace API.Controllers
             }
             return Ok(new { status = data.Status, isSendmail = true });
         }
+        [HttpGet("{dataid}/{userid}")]
         public async Task<IActionResult> LoadDataComment(int dataid, int userid)
         {
             return Ok(await _commentService.ListComments(dataid, userid));
         }
+        [HttpPost]
         public async Task<IActionResult> AddCommentHistory(int userid, int dataid)
         {
             return Ok(await _commentService.AddCommentHistory(userid, dataid));
         }
+        [HttpPost]
         public async Task<IActionResult> Remark(int dataid)
         {
             return Ok(await _dataService.Remark(dataid));
         }
+        [HttpPost]
+
         public async Task<IActionResult> AddFavourite(Favourite entity)
         {
             return Ok(await _favouriteService.Add(entity));
         }
+        [HttpGet("{obj}/{page}/{pageSize}")]
         public async Task<IActionResult> LoadDataProvide(string obj, int page, int pageSize)
         {
             return Ok(await _kPILevelService.LoadDataProvide(obj, page, pageSize));
         }
+        [HttpPost]
         public async Task<IActionResult> UpdateRemark(int dataid, string remark)
         {
             return Ok(await _dataService.UpdateRemark(dataid, remark));
         }
+        [HttpPost]
         public async Task<IActionResult> Update(ActionPlan item)
         {
             return Ok(await _actionPlanService.Update(item));
         }
+        [HttpPost]
         public async Task<IActionResult> Add(ActionPlanParams obj)
         {
             string token = Request.Headers["Authorization"];
@@ -122,19 +132,24 @@ namespace API.Controllers
             }
             return Ok(new { status = data.Status, isSendmail = true });
         }
+        
+        [HttpGet("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             return Ok(await _actionPlanService.Remove(id));
         }
+        [HttpGet("{DataID}/{CommentID}/{UserID}")]
         public async Task<IActionResult> GetAll(int DataID, int CommentID, int UserID)
         {
             //var userprofile = Session["UserProfile"] as UserProfileVM;
             return Ok(await _actionPlanService.GetAll(DataID, CommentID, UserID));
         }
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetByID(int id)
         {
             return Ok(await _actionPlanService.GetById(id));
         }
+        [HttpPost]
         public async Task<IActionResult> Approval(int id, int approveby, string KPILevelCode, int CategoryID)
         {
             var model = await _actionPlanService.Approve(id, approveby, KPILevelCode, CategoryID);
@@ -149,6 +164,7 @@ namespace API.Controllers
             }
             return Ok(new { status = model.Item2, isSendmail = true });
         }
+        [HttpPost]
         public async Task<IActionResult> Done(int id, string KPILevelCode, int CategoryID)
         {
 
@@ -168,16 +184,19 @@ namespace API.Controllers
             }
             return Ok(new { status = model.Item2, isSendmail = true });
         }
+        [HttpPost]
         public async Task<IActionResult> AddNotification(Notification notification)
         {
             var status = await _notificationService.Add(notification);
             //NotificationHub.SendNotifications();
             return Ok(status);
         }
+        [HttpPost]
         public async Task<IActionResult> UpdateActionPlan(ActionPlanForUpdateParams actionPlan)
         {
             return Ok(await _actionPlanService.UpdateActionPlan(actionPlan));
         }
+        [HttpPost]
         public async Task<IActionResult> UpdateSheduleDate(string name, string value, string pk)
         {
             string token = Request.Headers["Authorization"];

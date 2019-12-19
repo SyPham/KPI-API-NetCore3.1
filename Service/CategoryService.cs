@@ -1,7 +1,7 @@
 ﻿using Models;
 using Models.EF;
 using Microsoft.EntityFrameworkCore;
-using Service.helpers;
+
 using Service.Helpers;
 using Service.Interface;
 using System;
@@ -148,7 +148,11 @@ namespace Service
                     x.ID,
                     x.LevelID,
                     x.CreateTime,
-                    Total = _dbContext.CategoryKPILevels.Where(a => a.CategoryID == x.ID && a.Status == true).Count(),
+                    Total = _dbContext.CategoryKPILevels.Join(_dbContext.KPILevels,
+                                cat => cat.KPILevelID,
+                                kpil => kpil.ID,
+                                (cat, kpil) => new { cat.CategoryID, cat.Status, kpil.Checked }
+                            ).Where(a => a.CategoryID == x.ID && a.Status == true && a.Checked == true).Count(),
                     Status = ocCategories.FirstOrDefault(a => a.CategoryID == x.ID && a.OCID == ocID) == null ? false : ocCategories.FirstOrDefault(a => a.CategoryID == x.ID && a.OCID == ocID).Status
                 }).Where(x => x.Status == true && x.Total > 0).ToListAsync();
 

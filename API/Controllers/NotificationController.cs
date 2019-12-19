@@ -15,10 +15,12 @@ namespace API.Controllers
         {
             _notificationService = notificationService;
         }
+        [HttpPost]
         public async Task<IActionResult> UpdateRange(string listID)
         {
             return Ok(await _notificationService.UpdateRange(listID));
         }
+        [HttpPost]
         public async Task<IActionResult> Update(int ID)
         {
             var obj =await _notificationService.Update(ID);

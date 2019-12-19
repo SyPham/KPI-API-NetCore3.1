@@ -1,4 +1,5 @@
 ﻿
+using API.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Service;
 using System.Threading.Tasks;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace API.Controllers
 {
-  
+
     public class FavouriteController : ControllerBase
     {
 
@@ -18,9 +19,9 @@ namespace API.Controllers
         {
             _favouriteService = favouriteService;
         }
-
-        [HttpGet]
-        public async Task<IActionResult> LoadData(int userid, int page, int pageSize)
+        [HttpGet("{userid}")]
+        [HttpGet("{userid}/{page}/{pageSize}")]
+        public async Task<IActionResult> LoadData(int userid, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _favouriteService.GetAllPaging(userid, page, pageSize));
         }

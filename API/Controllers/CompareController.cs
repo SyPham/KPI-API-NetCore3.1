@@ -1,7 +1,7 @@
 ﻿
 using Microsoft.AspNetCore.Mvc;
 using Service;
-using Service.helpers;
+using Service.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +23,7 @@ namespace API.Controllers
 
         // GET: Compare
 
+        [HttpGet("{obj}")]
         public IActionResult Compare(string obj)
         {
        

@@ -1,7 +1,7 @@
 ﻿using Models;
 using Models.EF;
 using Microsoft.EntityFrameworkCore;
-using Service.helpers;
+using Service.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Service.helpers
+namespace Service.Helpers
 {
     public static class CodeUtility
     {

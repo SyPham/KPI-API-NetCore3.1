@@ -4,6 +4,7 @@ using Models.ViewModels.KPILevel;
 using Microsoft.AspNetCore.Mvc;
 using Service;
 using System.Threading.Tasks;
+using API.Helpers;
 
 namespace API.Controllers
 {
@@ -31,47 +32,48 @@ namespace API.Controllers
         {
             return Ok(await _levelService.GetListTree());
         }
+        [HttpGet("{kpilevelcode}/{period}")]
         public async Task<ActionResult> Period(string kpilevelcode, string period)
         {
             return Ok(await _KPIService.GetAllAjax(kpilevelcode, period));
         }
+        [HttpGet("{id}")]
         public IActionResult GetListTreeClient(int id)
         {
             return Ok(_levelService.GetListTreeClient(id));
         }
 
 
-        public IActionResult LoadDataKPILevel(int level, int category, int page, int pageSize)
+        [HttpGet("{level}/{category}")]
+        [HttpGet("{level}/{category}/{page}/{pageSize}")]
+        public IActionResult LoadDataKPILevel(int level, int category, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(_kpiLevelService.LoadDataForUser(level, category, page, pageSize));
         }
-        public IActionResult GetCategoryCode(Category entity)
+        [HttpGet]
+        public IActionResult GetCategoryCode()
         {
             return Ok(_categoryService.GetAll());
         }
+        [HttpPost]
         public IActionResult UpdateKPILevel(KPILevelForUpdate entity)
         {
             return Ok(_kpiLevelService.Update(entity));
         }
-
-        //public IActionResult AddComment(Model.EF.Comment entity)
-        //{
-        //    var value = entity.KPILevelCode;
-        //    entity.KPILevelCode = value.Substring(0, value.Length - 1);
-        //    entity.Period = value.Substring(value.Length - 1, 1).ToUpper();
-        //    return Ok(_KPIService.AddComment(entity));
-        //}
-
+        [HttpGet("{dataid}/{userid}")]
         public IActionResult LoadDataComment(int dataid, int userid)
         {
             return Ok(_KPIService.ListComments(dataid, userid));
         }
 
+        [HttpPost]
         public IActionResult AddKPI(KPI entity)
         {
             return Ok(_KPIService.Add(entity));
         }
-        public IActionResult GetAllKPILevel(int category, int page, int pageSize)
+        [HttpGet("{category}")]
+        [HttpGet("{category}/{page}/{pageSize}")]
+        public IActionResult GetAllKPILevel(int category, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(_kpiLevelService.GetAllPaging(category, page, pageSize));
         }

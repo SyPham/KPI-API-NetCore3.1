@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using API.Helpers;
 
 namespace API.Controllers
 {
@@ -42,7 +43,7 @@ namespace API.Controllers
         [HttpGet("{Id}")]
         public async Task<IActionResult> GetById(int Id)
         {
-            
+
             return Ok(await _menuService.GetById(Id));
         }
         [HttpGet]
@@ -52,12 +53,14 @@ namespace API.Controllers
             return Ok(await _menuService.GetAll());
 
         }
-        public async Task<IActionResult> GetAllPaging(string keyword, int page, int pageSize)
+        [HttpGet("{keyword}")]
+        [HttpGet("{keyword}/{page}/{pageSize}")]
+        public async Task<IActionResult> GetAllPaging(string keyword, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _menuService.GetAllPaging(keyword, page, pageSize));
-
         }
 
+        [HttpGet]
         public async Task<IActionResult> GetPermissions()
         {
             return Ok(await _menuService.GetPermissions());

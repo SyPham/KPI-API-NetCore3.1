@@ -4,6 +4,7 @@ using Models;
 using Microsoft.AspNetCore.Mvc;
 using Service;
 using System.Threading.Tasks;
+using API.Helpers;
 
 namespace API.Controllers
 {
@@ -20,7 +21,9 @@ namespace API.Controllers
             _userService = userService;
         }
 
-        public async Task<IActionResult> LoadDataUser(int teamid, string code, int page, int pageSize)
+        [HttpGet("{teamid}/{code}")]
+        [HttpGet("{teamid}/{code}/{page}/{pageSize}")]
+        public async Task<IActionResult> LoadDataUser(int teamid, string code, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _userService.LoadDataUser(teamid, code, page, pageSize));
         }

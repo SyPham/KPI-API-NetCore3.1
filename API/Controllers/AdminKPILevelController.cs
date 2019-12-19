@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using API.Helpers;
 
 namespace API.Controllers
 {
@@ -26,17 +27,20 @@ namespace API.Controllers
         /// Lấy ra danh sách OC theo tree view
         /// </summary>
         /// <returns></returns>
+        [HttpGet]
         public async Task<IActionResult> GetListTree()
         {
             return Ok(await _levelService.GetListTree());
         }
-
-        public async Task<IActionResult> LoadDataKPILevel(int level, int category, int page, int pageSize)
+        [HttpGet("{level}/{category}")]
+        [HttpGet("{level}/{category}/{page}/{pageSize}")]
+        public async Task<IActionResult> LoadDataKPILevel(int level, int category, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _KPILevelService.LoadData(level, category, page, pageSize));
         }
-
-        public async Task<IActionResult> GetAll(int level, int category, int page, int pageSize)
+        [HttpGet("{level}/{category}")]
+        [HttpGet("{level}/{category}/{page}/{pageSize}")]
+        public async Task<IActionResult> GetAll(int level, int category, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _KPILevelService.GetAllPaging(level, category, page, pageSize));
         }
@@ -45,6 +49,7 @@ namespace API.Controllers
         //    return Ok(await _KPILevelService.GetAllCategory());
         //}
         //update kpiLevel
+        [HttpPost]
         public async Task<IActionResult> UpdateKPILevel(KPILevelForUpdate entity)
         {
             return Ok(await _KPILevelService.Update(entity));
@@ -56,6 +61,7 @@ namespace API.Controllers
         {
             return Ok(await _KPILevelService.UpdateKPILevel(entity));
         }
+        [HttpGet("{ID}")]
         public async Task<IActionResult> GetbyID(int ID)
         {
             return Ok(await _KPILevelService.GetById(ID));

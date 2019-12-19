@@ -4,6 +4,7 @@ using Models.EF;
 using Microsoft.AspNetCore.Mvc;
 using Service;
 using System.Threading.Tasks;
+using API.Helpers;
 
 namespace API.Controllers
 {
@@ -18,31 +19,40 @@ namespace API.Controllers
             _categoryKPILevelService = categoryKPILevelService;
         }
 
-        public async Task<IActionResult> GetAllCategories(int page, int pageSize, int level, int OCID)
+        [HttpGet("{level}/{OCID}")]
+        [HttpGet("{level}/{OCID}/{page}/{pageSize}")]
+        public async Task<IActionResult> GetAllCategories(int level, int OCID, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _categoryKPILevelService.GetCategoryByOC(page, pageSize, level, OCID));
         }
 
+        [HttpGet("{page}/{pageSize}")]
         public async Task<IActionResult> GetAllKPIlevels(int page, int pageSize)
         {
             return Ok(await _categoryKPILevelService.GetAllKPIlevels(page, pageSize));
         }
-        public async Task<IActionResult> LoadDataKPILevel(int level, int category, int page, int pageSize)
+        [HttpGet("{level}/{category}")]
+        [HttpGet("{level}/{category}/{page}/{pageSize}")]
+        public async Task<IActionResult> LoadDataKPILevel(int level, int category, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _categoryKPILevelService.LoadDataKPILevel(level, category, page, pageSize));
         }
+        [HttpPost]
         public async Task<IActionResult> Add(CategoryKPILevel entity)
         {
             return Ok(await _categoryKPILevelService.Add(entity));
         }
+        [HttpPost]
         public async Task<IActionResult> AddGeneral(int kpilevel, int category, string pic, string owner, string manager, string sponsor, string participant)
         {
             return Ok(await _categoryKPILevelService.AddGeneral(kpilevel, category, pic, owner, manager, sponsor, participant));
         }
+        [HttpGet("{KPILevelID}/{CategoryID}")]
         public async Task<IActionResult> GetUserByCategoryIDAndKPILevelID(int KPILevelID, int CategoryID)
         {
             return Ok(await _categoryKPILevelService.GetUserByCategoryIDAndKPILevelID(CategoryID, KPILevelID));
         }
+        [HttpPost]
         public async Task<IActionResult> RemoveCategoryKPILevel(int KPILevelID, int CategoryID)
         {
             return Ok(await _categoryKPILevelService.RemoveCategoryKPILevel(CategoryID, KPILevelID));

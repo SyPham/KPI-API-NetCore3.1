@@ -5,12 +5,12 @@ using Models.ViewModels.Data;
 using Models.ViewModels.Level;
 using Models.ViewModels.User;
 using Microsoft.EntityFrameworkCore;
-using Service.helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Service.Helpers;
 
 namespace Service
 {
@@ -63,10 +63,293 @@ namespace Service
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
-        public Task<object> GetAllDataByCategory(int categoryid, string period, int? start, int? end, int? year)
+        public async Task<List<ManagerOwnerUpdaterSponsorParticipantViewModel>> GetAllManagerOwnerUpdaterSponsorParticipant(int categoryID)
         {
-            throw new NotImplementedException();
+            var managers = _dbContext.Managers;
+            var owners = _dbContext.Owners;
+            var updaters = _dbContext.Uploaders;
+            var sponsors = _dbContext.Sponsors;
+            var participant = _dbContext.Participants;
+            var KPIs = _dbContext.KPIs;
+            var users = _dbContext.Users;
+
+            var data = await _dbContext.CategoryKPILevels.Where(x => x.CategoryID == categoryID)
+                .Join(_dbContext.KPILevels,
+                categoryKPILevel => categoryKPILevel.KPILevelID,
+                kpilevel => kpilevel.ID,
+                (categoryKPILevel, kpilevel) => new
+                {
+                    categoryKPILevel.KPILevelID,
+                    categoryKPILevel.CategoryID,
+                    kpilevel.KPIID,
+                    kpilevel.KPILevelCode
+                })
+                 .Join(KPIs,
+                categoryKPILevelKPI => categoryKPILevelKPI.KPIID,
+                kpi => kpi.ID,
+                (categoryKPILevelKPI, kpi) => new
+                {
+                    categoryKPILevelKPI.KPILevelID,
+                    categoryKPILevelKPI.KPILevelCode,
+                    categoryKPILevelKPI.CategoryID,
+                    KPIName = kpi.Name
+                })
+                .Select(x => new
+                {
+                    x.CategoryID,
+                    x.KPILevelID,
+                    x.KPIName,
+                    x.KPILevelCode
+                }).ToListAsync();
+
+            var model = data
+                .Select(x => new ManagerOwnerUpdaterSponsorParticipantViewModel
+                {
+                    CategoryID = x.CategoryID,
+                    KPILevelID = x.KPILevelID,
+                    KPIName = x.KPIName,
+                    KPILevelCode = x.KPILevelCode
+                }).ToList();
+
+            return model;
+        }
+        public async Task<object> GetAllDataByCategory(int categoryid, string period, int? start, int? end, int? year)
+        {
+            var currentYear = DateTime.Now.Year;
+            var currentWeek = DateTime.Now.GetIso8601WeekOfYear();
+            var currentMonth = DateTime.Now.Month;
+            var currentQuarter = DateTime.Now.GetQuarter();
+            //labels của chartjs mặc định có 53 phần tử
+            List<DatasetViewModel> listDatasetViewModel = new List<DatasetViewModel>();
+            if (!period.IsNullOrEmpty())
+            {
+                var datasets = new List<object>();
+                //labels của chartjs mặc định có 53 phần tử
+                List<string> listLabels = new List<string>();
+
+                var dataremarks = new List<Dataremark>();
+
+                //var tbldata = _dbContext.Datas;
+
+
+                var listKPILevelID = await GetAllManagerOwnerUpdaterSponsorParticipant(categoryid);
+
+                if (year == 0)
+                    year = currentYear;
+
+                if (period.ToLower() == "w")
+                {
+                    foreach (var item in listKPILevelID)
+                    {
+                        //var kpi = tblKPI.Find(item.KPIID).Name;
+                        var tblCategory = await _dbContext.Categories.FindAsync(item.CategoryID);
+                        var categorycode = tblCategory.Code;
+
+                        var obj = await GetAllOwner(categoryid, item.KPILevelID);
+                        var tbldata = await _dbContext.Datas
+                       .Where(x => x.KPILevelCode == item.KPILevelCode && x.Period == "W" && x.Yearly == year)
+                        .OrderBy(x => x.Week)
+                        .Select(x => new
+                        {
+                            ID = x.ID,
+                            Value = x.Value,
+                            Remark = x.Remark,
+                            x.Target,
+                            Week = x.Week
+                        })
+                        .ToListAsync();
+                        dataremarks = tbldata
+                                     .Where(a => a.Value.ToDouble() > 0)
+                     .Select(a => new Dataremark
+                     {
+                         ID = a.ID,
+                         Value = a.Value,
+                         Remark = a.Remark,
+                         Week = a.Week,
+                         ValueArray = new string[3] { a.Value, (a.Target.ToDouble() >= a.Value.ToDouble() ? false : true).ToString(), a.Target },
+                     }).ToList();
+
+                        if (start > 0 && end > 0)
+                        {
+                            dataremarks = dataremarks.Where(x => x.Week >= start && x.Week <= end).ToList();
+                        }
+
+                        var datasetsvm = new DatasetViewModel();
+                        datasetsvm.KPIName = item.KPIName;
+                        datasetsvm.Manager = obj.Manager;
+                        datasetsvm.Owner = obj.Owner;
+                        datasetsvm.Updater = obj.Updater;
+                        datasetsvm.Sponsor = obj.Sponsor;
+                        datasetsvm.Participant = obj.Participant;
+                        datasetsvm.CategoryName = tblCategory.Name;
+                        datasetsvm.CategoryCode = categorycode;
+                        datasetsvm.KPILevelCode = item.KPILevelCode;
+
+                        datasetsvm.Datasets = dataremarks;
+                        datasetsvm.Period = "Weekly";
+
+                        listDatasetViewModel.Add(datasetsvm);
+
+                    }
+                }
+                else if (period.ToLower() == "m")
+                {
+                    foreach (var item in listKPILevelID)
+                    {
+                        var tblCategory = await _dbContext.Categories.FindAsync(item.CategoryID);
+                        var categorycode = tblCategory.Code;
+
+                        var obj = await GetAllOwner(categoryid, item.KPILevelID);
+                        var tbldata = await _dbContext.Datas
+                            .Where(x => x.KPILevelCode == item.KPILevelCode && x.Period == "M" && x.Yearly == year)
+                          .OrderBy(x => x.Month)
+                          .Select(x => new
+                          {
+                              ID = x.ID,
+                              Value = x.Value,
+                              Remark = x.Remark,
+                              x.Target,
+                              Month = x.Month,
+
+                          }).ToListAsync();
+                        dataremarks = tbldata
+                          .Where(a => a.Value.ToDouble() > 0)
+                         .Select(a => new Dataremark
+                         {
+                             ID = a.ID,
+                             Value = a.Value,
+                             Remark = a.Remark,
+                             Week = a.Month,
+                             ValueArray = new string[3] { a.Value, (a.Target.ToDouble() >= a.Value.ToDouble() ? false : true).ToString(), a.Target },
+                         }).ToList();
+
+                        if (start > 0 && end > 0)
+                        {
+                            dataremarks = dataremarks.Where(x => x.Week >= start && x.Week <= end).ToList();
+                        }
+                        var datasetsvm = new DatasetViewModel();
+                        datasetsvm.KPIName = item.KPIName;
+                        datasetsvm.Manager = obj.Manager;
+                        datasetsvm.Owner = obj.Owner;
+                        datasetsvm.Updater = obj.Updater;
+                        datasetsvm.Sponsor = obj.Sponsor;
+                        datasetsvm.Participant = obj.Participant;
+                        datasetsvm.CategoryName = tblCategory.Name;
+                        datasetsvm.CategoryCode = categorycode;
+                        datasetsvm.KPILevelCode = item.KPILevelCode;
+
+                        datasetsvm.Datasets = dataremarks;
+                        datasetsvm.Period = "Monthly";
+
+                        listDatasetViewModel.Add(datasetsvm);
+
+                    }
+                }
+                else if (period.ToLower() == "q")
+                {
+                    foreach (var item in listKPILevelID)
+                    {
+                        var tblCategory = await _dbContext.Categories.FindAsync(item.CategoryID);
+                        var categorycode = tblCategory.Code;
+
+                        var obj = await GetAllOwner(categoryid, item.KPILevelID);
+                        var tbldata = await _dbContext.Datas
+                            .Where(x => x.KPILevelCode == item.KPILevelCode && x.Period == "Q" && x.Yearly == year)
+                          .OrderBy(x => x.Quarter)
+                         .Select(x => new
+                         {
+                             ID = x.ID,
+                             Value = x.Value,
+                             Remark = x.Remark,
+                             x.Target,
+                             Quarter = x.Quarter,
+
+                         }).ToListAsync();
+                        dataremarks = tbldata
+                        .Where(a => a.Value.ToDouble() > 0)
+                       .Select(a => new Dataremark
+                       {
+                           ID = a.ID,
+                           Value = a.Value,
+                           Remark = a.Remark,
+                           Week = a.Quarter,
+                           ValueArray = new string[3] { a.Value, (a.Target.ToDouble() >= a.Value.ToDouble() ? false : true).ToString(), a.Target },
+                       }).ToList();
+                        if (start > 0 && end > 0)
+                        {
+                            dataremarks = dataremarks.Where(x => x.Week >= start && x.Week <= end).ToList();
+                        }
+                        var datasetsvm = new DatasetViewModel();
+                        datasetsvm.KPIName = item.KPIName;
+                        datasetsvm.Manager = obj.Manager;
+                        datasetsvm.Owner = obj.Owner;
+                        datasetsvm.Updater = obj.Updater;
+                        datasetsvm.Sponsor = obj.Sponsor;
+                        datasetsvm.Participant = obj.Participant;
+                        datasetsvm.CategoryName = tblCategory.Name;
+                        datasetsvm.CategoryCode = categorycode;
+                        datasetsvm.KPILevelCode = item.KPILevelCode;
+
+                        datasetsvm.Datasets = dataremarks;
+                        datasetsvm.Period = "Quarterly";
+
+                        listDatasetViewModel.Add(datasetsvm);
+
+                    }
+                }
+                else if (period.ToLower() == "y")
+                {
+                    foreach (var item in listKPILevelID)
+                    {
+                        var tblCategory = await _dbContext.Categories.FindAsync(item.CategoryID);
+                        var categorycode = tblCategory.Code;
+
+                        var obj = await GetAllOwner(categoryid, item.KPILevelID);
+                        var tbldata = await _dbContext.Datas
+                          .Where(x => x.KPILevelCode == item.KPILevelCode && x.Period == "Y" && x.Yearly == year)
+                          .OrderBy(x => x.Year)
+                          .Select(x => new
+                          {
+                              ID = x.ID,
+                              Value = x.Value,
+                              Remark = x.Remark,
+                              x.Target,
+                              Year = x.Year,
+
+                          }).ToListAsync();
+                        dataremarks = tbldata
+                          .Where(a => a.Value.ToDouble() > 0)
+                         .Select(a => new Dataremark
+                         {
+                             ID = a.ID,
+                             Value = a.Value,
+                             Remark = a.Remark,
+                             Week = a.Year,
+                             ValueArray = new string[3] { a.Value, (a.Target.ToDouble() >= a.Value.ToDouble() ? false : true).ToString(), a.Target },
+                         }).ToList();
+                        if (start > 0 && end > 0)
+                        {
+                            dataremarks = dataremarks.Where(x => x.Week >= start && x.Week <= end).ToList();
+                        }
+                        var datasetsvm = new DatasetViewModel();
+                        datasetsvm.KPIName = item.KPIName;
+                        datasetsvm.Manager = obj.Manager;
+                        datasetsvm.Owner = obj.Owner;
+                        datasetsvm.Updater = obj.Updater;
+                        datasetsvm.Sponsor = obj.Sponsor;
+                        datasetsvm.Participant = obj.Participant;
+                        datasetsvm.CategoryName = tblCategory.Name;
+                        datasetsvm.CategoryCode = categorycode;
+                        datasetsvm.KPILevelCode = item.KPILevelCode;
+
+                        datasetsvm.Datasets = dataremarks;
+                        datasetsvm.Period = "Yearly";
+
+                        listDatasetViewModel.Add(datasetsvm);
+                    }
+                }
+            }
+            return listDatasetViewModel;
         }
 
         public async Task<DataUserViewModel> GetAllOwner(int categoryID, int kpilevelID)

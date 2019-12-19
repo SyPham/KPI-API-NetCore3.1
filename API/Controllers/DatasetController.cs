@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.AspNetCore.Mvc;
 using Service;
+using System;
 using System.Threading.Tasks;
 
 
@@ -12,21 +13,17 @@ namespace API.Controllers
     {
         private readonly IDataService _dataService;
 
-
         public DatasetController(IDataService dataService)
         {
             _dataService = dataService;
         }
 
         // GET: Dataset
-   
-        public async Task<ActionResult> GetAllDataByCategory(int catid, string period, int? start = 0, int? end = 0, int? year = 0)
+        [HttpGet("{catid}/{period}/{start}/{end}/{year}")]
+        public async Task<ActionResult> GetAllDataByCategory(int catid, string period, int? start, int? end, int? year)
         {
-           
-            var datasets =await _dataService.GetAllDataByCategory(catid, period, start, end, year);
-            
-           
-            return Ok(datasets);
+            year = year ?? DateTime.Now.Year;
+            return Ok(await _dataService.GetAllDataByCategory(catid, period, start, end, year));
         }
     }
 }

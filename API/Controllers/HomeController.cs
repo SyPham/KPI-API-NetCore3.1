@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service;
 using API.Helpers;
 using Microsoft.Extensions.Configuration;
-using Service.helpers;
+using Service.Helpers;
 using System.Linq;
 using Models.EF;
 using System.Collections.Generic;
@@ -43,31 +43,31 @@ namespace API.Controllers
             _configuration = configuration;
         }
 
-        public IActionResult ChangeLanguage(String Langby)
-        {
-            //if (Langby != null)
-            //{
-            //    var userProfile = Session["UserProfile"] as UserProfileVM;
+        //public IActionResult ChangeLanguage(String Langby)
+        //{
+        //    //if (Langby != null)
+        //    //{
+        //    //    var userProfile = Session["UserProfile"] as UserProfileVM;
 
-            //    var sibars= new UserAdminDAO().Sidebars(userProfile.User.Permission,Langby);
-            //    var userVM = new UserProfileVM();
-            //    userVM.User = userProfile.User;
-            //    userVM.Menus = sibars;
+        //    //    var sibars= new UserAdminDAO().Sidebars(userProfile.User.Permission,Langby);
+        //    //    var userVM = new UserProfileVM();
+        //    //    userVM.User = userProfile.User;
+        //    //    userVM.Menus = sibars;
 
-            //    Session["UserProfile"] = userVM;
-            //    System.Threading.Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture(Langby);
-            //    System.Threading.Thread.CurrentThread.CurrentUICulture = new CultureInfo(Langby);
-            //}
+        //    //    Session["UserProfile"] = userVM;
+        //    //    System.Threading.Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture(Langby);
+        //    //    System.Threading.Thread.CurrentThread.CurrentUICulture = new CultureInfo(Langby);
+        //    //}
 
-            //HttpCookie cookie = new HttpCookie("Lang");
-            //cookie.Value = Langby;
-            //Response.Cookies.Add(cookie);
-            //string urlReferrer = Request.UrlReferrer.ToString();
+        //    //HttpCookie cookie = new HttpCookie("Lang");
+        //    //cookie.Value = Langby;
+        //    //Response.Cookies.Add(cookie);
+        //    //string urlReferrer = Request.UrlReferrer.ToString();
 
-            //return Redirect(Request.UrlReferrer.ToString());
-            return Ok();
-        }
-        public async Task<bool> SendMail()
+        //    //return Redirect(Request.UrlReferrer.ToString());
+        //    return Ok();
+        //}
+        private async Task<bool> SendMail()
         {
             string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
             string token = Request.Headers["Authorization"];
@@ -145,6 +145,7 @@ namespace API.Controllers
         }
        
 
+        [HttpGet]
         public async Task<IActionResult> GetNotifications()
         {
             string token = Request.Headers["Authorization"];
@@ -168,7 +169,8 @@ namespace API.Controllers
             }
             return Ok(new { arrayID = listID.ToArray(), total = total, data = listNotifications });
         }
-        public ActionResult ListHistoryNotification()
+        [HttpGet]
+        public IActionResult ListHistoryNotification()
         {
             string token = Request.Headers["Authorization"];
             var userID = Extensions.DecodeToken(token).FirstOrDefault(x => x.Type == "nameid").Value.ToInt();

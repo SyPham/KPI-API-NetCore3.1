@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service;
 using Microsoft.AspNetCore.Http;
 using Models.ViewModels.Data;
-using Service.helpers;
+using Service.Helpers;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
 using Microsoft.AspNetCore.Authorization;
@@ -48,8 +48,9 @@ namespace API.Controllers
         }
 
         // GET: Workplace
+        [HttpGet("{page}/{pageSize}")]
         [HttpGet]
-        public async Task<IActionResult> ListKPIUpload(int page, int pageSize)
+        public async Task<IActionResult> ListKPIUpload(int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             string token = Request.Headers["Authorization"];
             var Id = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
@@ -63,7 +64,9 @@ namespace API.Controllers
 
             return Ok(await _dataService.ListKPIUpload(Id, page, pageSize));
         }
-        public async Task<IActionResult> LoadActionPlan(string role, int page, int pageSize)
+        [HttpGet("{role}")]
+        [HttpGet("{role}/{page}/{pageSize}")]
+        public async Task<IActionResult> LoadActionPlan(string role, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _actionPlanService.LoadActionPlan(role, page, pageSize));
         }
@@ -400,6 +403,7 @@ namespace API.Controllers
             }
 
         }
+        [HttpPost]
         public ActionResult ExcelExport(int userid)
         {
             var model = _dataService.DataExport(userid);
@@ -503,15 +507,21 @@ namespace API.Controllers
             }
         }
 
-        public async Task<IActionResult> UpLoadKPILevel(int userid, int page, int pageSize)
+        [HttpGet("{userid}")]
+        [HttpGet("{userid}/{page}/{pageSize}")]
+        public async Task<IActionResult> UpLoadKPILevel(int userid, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _dataService.UpLoadKPILevel(userid, page, pageSize));
         }
-        public async Task<IActionResult> UpLoadKPILevelTrack(int userid, int page, int pageSize)
+        [HttpGet("{userid}")]
+        [HttpGet("{userid}/{page}/{pageSize}")]
+        public async Task<IActionResult> UpLoadKPILevelTrack(int userid, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _dataService.UpLoadKPILevelTrack(userid, page, pageSize));
         }
-        public async Task<IActionResult> KPIRelated(int levelid, int page, int pageSize)
+        [HttpGet("{levelid}/{page}/{pageSize}")]
+        [HttpGet]
+        public async Task<IActionResult> KPIRelated(int levelid, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _dataService.KPIRelated(levelid, page, pageSize));
         }
