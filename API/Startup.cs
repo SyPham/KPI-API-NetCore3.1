@@ -22,6 +22,7 @@ using Newtonsoft.Json.Serialization;
 using Microsoft.OpenApi.Models;
 using Service.Implementation;
 using Models.Data;
+using System.Collections.Generic;
 
 namespace API
 {
@@ -51,7 +52,21 @@ namespace API
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
-                //c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+
+                var security = new Dictionary<string, IEnumerable<string>>
+                {
+                    {"Bearer", new string[] { }},
+                };
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Authorization"
+                });
+                //c.AddSecurityRequirement(security);
             });
             var conn = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<DataContext>(x => x.UseSqlServer(conn));

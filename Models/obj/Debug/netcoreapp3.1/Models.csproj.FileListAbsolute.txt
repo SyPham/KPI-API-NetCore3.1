@@ -13,3 +13,4 @@ F:\0.Document\NetCore3.1\Swagger\KPI-API-NetCore3.1\Models\obj\Debug\netcoreapp3
 F:\0.Document\NetCore3.1\Swagger\KPI-API-NetCore3.1\Models\obj\Debug\netcoreapp3.1\Models.AssemblyInfo.cs
 F:\0.Document\NetCore3.1\Swagger\KPI-API-NetCore3.1\Models\obj\Debug\netcoreapp3.1\Models.dll
 F:\0.Document\NetCore3.1\Swagger\KPI-API-NetCore3.1\Models\obj\Debug\netcoreapp3.1\Models.pdb
+F:\0.Document\NetCore3.1\Swagger\KPI-API-NetCore3.1\Models\obj\Debug\netcoreapp3.1\Models.csprojAssemblyReference.cache
