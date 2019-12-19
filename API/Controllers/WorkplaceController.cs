@@ -6,7 +6,7 @@ using System.Linq;
 using System.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using Microsoft.AspNetCore.Http;
 using Models.ViewModels.Data;
 using Service.Helpers;
@@ -27,21 +27,18 @@ namespace API.Controllers
     {
         private readonly IActionPlanService _actionPlanService;
         private readonly IDataService _dataService;
-        private readonly IWebHostEnvironment _hostingEnvironment;
         private readonly IConfiguration _configuration;
         private readonly ILevelService _levelService;
         private readonly IMailHelper _mailHelper;
 
         public WorkplaceController(IActionPlanService actionPlanService,
                                    IDataService dataService,
-                                   IWebHostEnvironment hostingEnvironment,
                                    IConfiguration configuration,
                                    ILevelService levelService,
                                    IMailHelper mailHelper)
         {
             _actionPlanService = actionPlanService;
             _dataService = dataService;
-            _hostingEnvironment = hostingEnvironment;
             _configuration = configuration;
             _levelService = levelService;
             _mailHelper = mailHelper;
@@ -49,7 +46,6 @@ namespace API.Controllers
 
         // GET: Workplace
         [HttpGet("{page}/{pageSize}")]
-        [HttpGet]
         public async Task<IActionResult> ListKPIUpload(int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             string token = Request.Headers["Authorization"];
@@ -70,7 +66,7 @@ namespace API.Controllers
         {
             return Ok(await _actionPlanService.LoadActionPlan(role, page, pageSize));
         }
-        [HttpPost]
+        [HttpGet]
         public async Task<ActionResult> Import()
         {
             var URL = _configuration.GetSection("AppSettings:URL").Value.ToSafetyString();
@@ -98,20 +94,19 @@ namespace API.Controllers
 
                     for (int rowIterator = 2; rowIterator <= noOfRow; rowIterator++)
                     {
-                        var item = new UploadDataViewModel();
-                        item.KPILevelCode = workSheet.Cells[rowIterator, 1].Value.ToSafetyString().ToUpper();
-                        //item.KPIName = workSheet.Cells[rowIterator, 2].Value.ToSafetyString().ToUpper();
-                        item.Value = workSheet.Cells[rowIterator, 3].Value.ToSafetyString();
-                        item.TargetValue = workSheet.Cells[rowIterator, 4].Value.ToString() ?? "0";
-
-                        item.PeriodValue = workSheet.Cells[rowIterator, 5].Value.ToInt();
-                        item.Year = workSheet.Cells[rowIterator, 6].Value.ToInt();
-                        //item.Area = workSheet.Cells[rowIterator, 7].Value.ToSafetyString();
-                        //item.UpdateTime = workSheet.Cells[rowIterator, 8].Value.ToSafetyString().Trim();
-                        //item.Remark = workSheet.Cells[rowIterator, 8].Value.ToSafetyString();
-
-                        item.CreateTime = DateTime.Now;
-                        datasList.Add(item);
+                        datasList.Add(new UploadDataViewModel()
+                        {
+                            KPILevelCode = workSheet.Cells[rowIterator, 1].Value.ToSafetyString().ToUpper(),
+                            //KPIName = workSheet.Cells[rowIterator, 2].Value.ToSafetyString().ToUpper(),
+                            Value = workSheet.Cells[rowIterator, 3].Value.ToSafetyString(),
+                            TargetValue = workSheet.Cells[rowIterator, 4].Value.ToString() ?? "0",
+                            PeriodValue = workSheet.Cells[rowIterator, 5].Value.ToInt(),
+                            Year = workSheet.Cells[rowIterator, 6].Value.ToInt(),
+                            //Area = workSheet.Cells[rowIterator, 7].Value.ToSafetyString(),
+                            //UpdateTime = workSheet.Cells[rowIterator, 8].Value.ToSafetyString().Trim(),
+                            //Remark = workSheet.Cells[rowIterator, 8].Value.ToSafetyString(),
+                            CreateTime = DateTime.Now,
+                        });
                     }
                 }
 
@@ -137,8 +132,6 @@ namespace API.Controllers
                     }
                     content2 = content2.Replace("{{{html-template}}}", html2).Replace("{{{href}}}", url);
                     await _mailHelper.SendEmailRangeAsync(model.ListSendMail, "[KPI System] Upload Data succesfully!", content2);
-
-
                 }
                 if (model.ListUploadKPIVMs.Count > 0)
                 {
@@ -214,7 +207,7 @@ namespace API.Controllers
             }
             return Ok(false);
         }
-        [HttpPost]
+        [HttpGet("{userid}")]
         public ActionResult ExcelExport1(int userid)
         {
             var model = _dataService.DataExport(userid);
@@ -386,24 +379,22 @@ namespace API.Controllers
                 }
             }
             var memoryStream = new MemoryStream();
-            using (var excelPackage = new ExcelPackage(memoryStream))
-            {
-                var worksheet = excelPackage.Workbook.Worksheets.Add("Sheet1");
-                worksheet.Cells["A1"].LoadFromDataTable(Dt, true, TableStyles.None);
-                worksheet.Cells["A1:AN1"].Style.Font.Bold = true;
-                worksheet.DefaultRowHeight = 18;
+            using var excelPackage = new ExcelPackage(memoryStream);
+            var worksheet = excelPackage.Workbook.Worksheets.Add("Sheet1");
+            worksheet.Cells["A1"].LoadFromDataTable(Dt, true, TableStyles.None);
+            worksheet.Cells["A1:AN1"].Style.Font.Bold = true;
+            worksheet.DefaultRowHeight = 18;
 
-                worksheet.Column(2).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
-                worksheet.Column(6).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
-                worksheet.Column(7).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
-                worksheet.DefaultColWidth = 20;
-                worksheet.Column(2).AutoFit();
+            worksheet.Column(2).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
+            worksheet.Column(6).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+            worksheet.Column(7).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+            worksheet.DefaultColWidth = 20;
+            worksheet.Column(2).AutoFit();
 
-                return File(excelPackage.GetAsByteArray(), "application/octet-stream", "DataUpload.xlsx");
-            }
+            return File(excelPackage.GetAsByteArray(), "application/octet-stream", "DataUpload.xlsx");
 
         }
-        [HttpPost]
+        [HttpGet("{userid}")]
         public ActionResult ExcelExport(int userid)
         {
             var model = _dataService.DataExport(userid);
@@ -412,9 +403,9 @@ namespace API.Controllers
             var currentMonth = DateTime.Now.Month;
             var currentQuarter = DateTime.Now.GetQuarter();
 
-            var now = DateTime.Now;
-            var end = now.GetEndOfQuarter();
-            var tt = end.Subtract(now).Days;
+            //var now = DateTime.Now;
+            //var end = now.GetEndOfQuarter();
+            //var tt = end.Subtract(now).Days;
             //var targetValue = "";
 
             DataTable Dt = new DataTable();
@@ -489,22 +480,19 @@ namespace API.Controllers
                 }
             }
             var memoryStream = new MemoryStream();
-            using (var excelPackage = new ExcelPackage(memoryStream))
-            {
-                var worksheet = excelPackage.Workbook.Worksheets.Add("Sheet1");
-                worksheet.Cells["A1"].LoadFromDataTable(Dt, true, TableStyles.None);
-                worksheet.Cells["A1:AN1"].Style.Font.Bold = true;
-                worksheet.DefaultRowHeight = 18;
+            using var excelPackage = new ExcelPackage(memoryStream);
+            var worksheet = excelPackage.Workbook.Worksheets.Add("Sheet1");
+            worksheet.Cells["A1"].LoadFromDataTable(Dt, true, TableStyles.None);
+            worksheet.Cells["A1:AN1"].Style.Font.Bold = true;
+            worksheet.DefaultRowHeight = 18;
 
-                worksheet.Column(2).Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
-                worksheet.Column(6).Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                worksheet.Column(7).Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                worksheet.DefaultColWidth = 20;
-                worksheet.Column(2).AutoFit();
+            worksheet.Column(2).Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
+            worksheet.Column(6).Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            worksheet.Column(7).Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            worksheet.DefaultColWidth = 20;
+            worksheet.Column(2).AutoFit();
 
-                return File(excelPackage.GetAsByteArray(), "application/octet-stream", "DataUpload.xlsx");
-
-            }
+            return File(excelPackage.GetAsByteArray(), "application/octet-stream", "DataUpload.xlsx");
         }
 
         [HttpGet("{userid}")]
@@ -520,7 +508,6 @@ namespace API.Controllers
             return Ok(await _dataService.UpLoadKPILevelTrack(userid, page, pageSize));
         }
         [HttpGet("{levelid}/{page}/{pageSize}")]
-        [HttpGet]
         public async Task<IActionResult> KPIRelated(int levelid, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _dataService.KPIRelated(levelid, page, pageSize));

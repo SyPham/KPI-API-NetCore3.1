@@ -1,31 +1,42 @@
-﻿using Models;
+﻿using Models.Data;
 using Models.EF;
-using Microsoft.EntityFrameworkCore;
+
 using Service.Helpers;
 using Service.Interface;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Service
+namespace Service.Implementation
 {
-   public interface ISettingService : IDisposable,ICommonService<Setting>
-    {
-        Task<bool> IsSendMail(string code);
-    }
-    public class SettingService : ISettingService
+   
+    public class ErrorMessageService : IErrorMessageService
     {
         private readonly DataContext _dbContext;
-        public SettingService(DataContext dbContext)
+
+        public ErrorMessageService(DataContext dbContext)
         {
             _dbContext = dbContext;
         }
 
-        public Task<bool> Add(Setting entity)
+        public async Task<bool> Add(ErrorMessage entity)
         {
-            throw new NotImplementedException();
+            _dbContext.Add(entity);
+            try
+            {
+               await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch 
+            {
+
+                return false;
+
+            }
         }
+
         private bool disposed = false;
         protected virtual void Dispose(bool disposing)
         {
@@ -44,23 +55,27 @@ namespace Service
             GC.SuppressFinalize(this);
         }
 
-
-        public Task<List<Setting>> GetAll()
+        public Task<List<ErrorMessage>> GetAll()
         {
             throw new NotImplementedException();
         }
 
-        public Task<List<Setting>> GetAllById(int Id)
+        public Task<List<ErrorMessage>> GetAllById(int Id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<PagedList<Setting>> GetAllPaging(string keyword, int page, int pageSize)
+        public async Task<PagedList<ErrorMessage>> GetAllPaging(string keyword, int page, int pageSize)
         {
-            throw new NotImplementedException();
+            var source = _dbContext.ErrorMessages.AsQueryable();
+            if (!keyword.IsNullOrEmpty())
+            {
+                source = source.Where(x => x.Name.Contains(keyword));
+            }
+            return await PagedList<ErrorMessage>.CreateAsync(source, page, pageSize);
         }
 
-        public Task<Setting> GetById(int Id)
+        public Task<ErrorMessage> GetById(int Id)
         {
             throw new NotImplementedException();
         }
@@ -70,22 +85,9 @@ namespace Service
             throw new NotImplementedException();
         }
 
-        public Task<bool> Update(Setting entity)
+        public Task<bool> Update(ErrorMessage entity)
         {
             throw new NotImplementedException();
-        }
-        public async Task<bool> IsSendMail(string code)
-        {
-            try
-            {
-                var item = await _dbContext.Settings.FirstOrDefaultAsync(x => x.Code.Equals(code));
-                return item.State;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-
         }
     }
 }

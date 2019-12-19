@@ -2,7 +2,7 @@
 using Models.EF;
 using Models.ViewModels.Comment;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System.Threading.Tasks;
 using API.Helpers;
 using System.Linq;
@@ -23,7 +23,6 @@ namespace API.Controllers
         private readonly ICommentService _commentService;
         private readonly IActionPlanService _actionPlanService;
         private readonly ISettingService _settingService;
-        private readonly ILevelService _levelService;
         private readonly IMailHelper _mailHelper;
         private readonly IKPILevelService _kPILevelService;
         private readonly IFavouriteService _favouriteService;
@@ -36,7 +35,6 @@ namespace API.Controllers
             ICommentService commentService,
             IActionPlanService actionPlanService,
             ISettingService settingService,
-            ILevelService levelService,
             IMailHelper mailHelper,
             IKPILevelService kPILevelService,
             IFavouriteService favouriteService,
@@ -47,14 +45,13 @@ namespace API.Controllers
             _commentService = commentService;
             _actionPlanService = actionPlanService;
             _settingService = settingService;
-            _levelService = levelService;
             _mailHelper = mailHelper;
             _kPILevelService = kPILevelService;
             _favouriteService = favouriteService;
             _configuaration = configuaration;
             _notificationService = notificationService;
         }
-        [HttpGet]
+        [HttpGet("{kpilevelcode}/{catid}/{period}/{year}/{start}/{end}")]
         public IActionResult ListDatas(string kpilevelcode, int? catid, string period, int? year, int? start, int? end)
         {
             var model = _dataService.ListDatas(kpilevelcode, period, year, start, end, catid);
@@ -62,7 +59,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddComment(AddCommentViewModel entity)
+        public async Task<IActionResult> AddComment([FromBody]AddCommentViewModel entity)
         {
             string token = Request.Headers["Authorization"];
             var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
@@ -87,18 +84,18 @@ namespace API.Controllers
             return Ok(await _commentService.ListComments(dataid, userid));
         }
         [HttpPost]
-        public async Task<IActionResult> AddCommentHistory(int userid, int dataid)
+        public async Task<IActionResult> AddCommentHistory([FromBody]int userid,int dataid)
         {
             return Ok(await _commentService.AddCommentHistory(userid, dataid));
         }
-        [HttpPost]
+        [HttpGet("{dataid}")]
         public async Task<IActionResult> Remark(int dataid)
         {
             return Ok(await _dataService.Remark(dataid));
         }
         [HttpPost]
 
-        public async Task<IActionResult> AddFavourite(Favourite entity)
+        public async Task<IActionResult> AddFavourite([FromBody]Favourite entity)
         {
             return Ok(await _favouriteService.Add(entity));
         }
@@ -107,18 +104,18 @@ namespace API.Controllers
         {
             return Ok(await _kPILevelService.LoadDataProvide(obj, page, pageSize));
         }
-        [HttpPost]
+        [HttpGet("{dataid}/{remark}")]
         public async Task<IActionResult> UpdateRemark(int dataid, string remark)
         {
             return Ok(await _dataService.UpdateRemark(dataid, remark));
         }
         [HttpPost]
-        public async Task<IActionResult> Update(ActionPlan item)
+        public async Task<IActionResult> Update([FromBody]ActionPlan item)
         {
             return Ok(await _actionPlanService.Update(item));
         }
         [HttpPost]
-        public async Task<IActionResult> Add(ActionPlanParams obj)
+        public async Task<IActionResult> Add([FromBody]ActionPlanParams obj)
         {
             string token = Request.Headers["Authorization"];
             var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
@@ -150,7 +147,7 @@ namespace API.Controllers
             return Ok(await _actionPlanService.GetById(id));
         }
         [HttpPost]
-        public async Task<IActionResult> Approval(int id, int approveby, string KPILevelCode, int CategoryID)
+        public async Task<IActionResult> Approval([FromBody]int id, int approveby, string KPILevelCode, int CategoryID)
         {
             var model = await _actionPlanService.Approve(id, approveby, KPILevelCode, CategoryID);
             //NotificationHub.SendNotifications();
@@ -165,7 +162,7 @@ namespace API.Controllers
             return Ok(new { status = model.Item2, isSendmail = true });
         }
         [HttpPost]
-        public async Task<IActionResult> Done(int id, string KPILevelCode, int CategoryID)
+        public async Task<IActionResult> Done([FromBody]int id, string KPILevelCode, int CategoryID)
         {
 
             string token = Request.Headers["Authorization"];
@@ -185,19 +182,19 @@ namespace API.Controllers
             return Ok(new { status = model.Item2, isSendmail = true });
         }
         [HttpPost]
-        public async Task<IActionResult> AddNotification(Notification notification)
+        public async Task<IActionResult> AddNotification([FromBody]Notification notification)
         {
             var status = await _notificationService.Add(notification);
             //NotificationHub.SendNotifications();
             return Ok(status);
         }
         [HttpPost]
-        public async Task<IActionResult> UpdateActionPlan(ActionPlanForUpdateParams actionPlan)
+        public async Task<IActionResult> UpdateActionPlan([FromBody]ActionPlanForUpdateParams actionPlan)
         {
             return Ok(await _actionPlanService.UpdateActionPlan(actionPlan));
         }
         [HttpPost]
-        public async Task<IActionResult> UpdateSheduleDate(string name, string value, string pk)
+        public async Task<IActionResult> UpdateSheduleDate([FromBody]string name, string value,string pk)
         {
             string token = Request.Headers["Authorization"];
             var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();

@@ -1,5 +1,5 @@
 ﻿
-using Models;
+using Models.Data;
 using Models.EF;
 using Models.ViewModels.Favourite;
 using Microsoft.EntityFrameworkCore;
@@ -12,12 +12,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Service
+namespace Service.Implementation
 {
-   public interface IFavouriteService: IDisposable,ICommonService<Favourite>
-    {
-        Task<object> GetAllPaging(int userid, int page, int pageSize);
-    }
+   
     public class FavouriteService : IFavouriteService
     {
         private readonly DataContext _dbContext;

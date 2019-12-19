@@ -1,6 +1,6 @@
 ﻿
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System.Threading.Tasks;
 
 namespace API.Controllers
@@ -15,12 +15,12 @@ namespace API.Controllers
         {
             _notificationService = notificationService;
         }
-        [HttpPost]
+        [HttpGet("{listID}")]
         public async Task<IActionResult> UpdateRange(string listID)
         {
             return Ok(await _notificationService.UpdateRange(listID));
         }
-        [HttpPost]
+        [HttpGet("ID")]
         public async Task<IActionResult> Update(int ID)
         {
             var obj =await _notificationService.Update(ID);

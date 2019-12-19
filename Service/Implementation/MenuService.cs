@@ -1,4 +1,4 @@
-﻿using Models;
+﻿using Models.Data;
 using Models.EF;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,12 +10,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Service
+namespace Service.Implementation
 {
-   public interface IMenuService: IDisposable, ICommonService<Menu>
-    {
-        Task<List<Permission>> GetPermissions();
-    }
+    
     public class MenuService : IMenuService
     {
         private readonly DataContext _dbContext;

@@ -2,7 +2,7 @@
 
 using API.Helpers;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System.Threading.Tasks;
 
 namespace API.Controllers
@@ -25,7 +25,7 @@ namespace API.Controllers
             _categoryService = categoryService;
         }
      
-        [HttpPost]
+        [HttpGet("{OCID}/{CategoryID}")]
         public async Task<IActionResult> AddOCCategory(int OCID, int CategoryID)
         {
             return Ok(await _OCCategoryService.AddOCCategory(OCID, CategoryID));

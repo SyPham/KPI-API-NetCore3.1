@@ -1,7 +1,7 @@
 ﻿
 using Models.EF;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System.Threading.Tasks;
 using API.Helpers;
 
@@ -21,28 +21,27 @@ namespace API.Controllers
 
         // GET: Settings
         [HttpPost]
-        public async Task<IActionResult> Add(Setting entity)
+        public async Task<IActionResult> Add([FromBody]Setting entity)
         {
             if (await _settingService.Add(entity))
                 return Ok();
             return BadRequest();
         }
         [HttpPost]
-        public async Task<IActionResult> Update(Setting entity)
+        public async Task<IActionResult> Update([FromBody]Setting entity)
         {
             if (await _settingService.Update(entity))
                 return Ok();
             return BadRequest();
         }
-        [HttpPost]
-
+        [HttpGet("{Id}")]
         public async Task<IActionResult> Delete(int Id)
         {
             if (await _settingService.Remove(Id))
                 return Ok();
             return BadRequest();
         }
-        [HttpPost]
+        [HttpGet("{Id}")]
         public async Task<IActionResult> Detail(int Id)
         {
             return Ok(await _settingService.GetById(Id));

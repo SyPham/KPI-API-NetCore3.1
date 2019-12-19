@@ -1,4 +1,4 @@
-﻿using Models;
+﻿using Models.Data;
 using Models.EF;
 using Microsoft.EntityFrameworkCore;
 using Service.Helpers;
@@ -9,11 +9,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Service
+namespace Service.Implementation
 {
-   public interface IUnitService: IDisposable, ICommonService<Unit>
-    {
-    }
+   
     public class UnitService : IUnitService
     {
         private readonly DataContext _dbContext;

@@ -1,6 +1,6 @@
 ﻿
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using Service.Helpers;
 using System;
 using System.Collections.Generic;
@@ -29,9 +29,9 @@ namespace API.Controllers
        
             if (obj == null)
                 return BadRequest();
-            var value = obj.Split(';')[1].Split(',');
-            var standard = value[0].ToInt();
-            var unit = value[1].ToString();
+            //var value = obj.Split(';')[1].Split(',');
+            //var standard = value[0].ToInt();
+            //var unit = value[1].ToString();
             var comp = obj.Split(';')[0].ToString();
 
           

@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using Service;
+using Service.Interface;
 using API.Dtos;
 using Service.Helpers;
 using API.Helpers;
@@ -52,7 +52,7 @@ namespace API.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
+        public async Task<IActionResult> Login([FromBody]UserForLoginDto userForLoginDto)
         {
             var user = await _authService.FindByNameAsync(userForLoginDto.Username);
 
@@ -61,13 +61,6 @@ namespace API.Controllers
             if (result == null)
                 return Unauthorized();
             
-            var userforreturn = new UserForReturnLogin
-            {
-                Username = user.Username,
-                Permission = user.Permission,
-                ID = user.ID,
-                Alias = user.Alias
-            };
             var userprofile = new UserProfileDto()
             {
                 User = new UserForReturnLogin

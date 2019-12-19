@@ -3,7 +3,7 @@
 using Models.EF;
 using Models.ViewModels.Level;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -15,14 +15,11 @@ namespace API.Controllers
     {
 
         private readonly ILevelService _levelService;
-        private readonly ILogger<AdminLevelController> _logger;
 
         public AdminLevelController(
-            ILevelService levelService,
-            ILogger<AdminLevelController> logger)
+            ILevelService levelService )
         {
             _levelService = levelService;
-            _logger = logger;
 
 
         }
@@ -37,7 +34,7 @@ namespace API.Controllers
         }
        
         [HttpPost]
-        public async Task<IActionResult> AddOrUpdate(Level entity)
+        public async Task<IActionResult> AddOrUpdate([FromBody]Level entity)
         {
             return Ok(await _levelService.AddOrUpdate(entity));
         }
@@ -53,7 +50,7 @@ namespace API.Controllers
         /// <param name="level"></param>
         /// <returns>True or False</returns>
         [HttpPost]
-        public async Task<IActionResult> Rename(TreeViewModel level)
+        public async Task<IActionResult> Rename([FromBody]TreeViewModel level)
         {
             //string Code = OkConvert.SerializeObject(code);
             return Ok(await _levelService.Rename(level));
@@ -70,7 +67,7 @@ namespace API.Controllers
             return Ok(await _levelService.Remove(id));
         }
         [HttpPost]
-        public async Task<IActionResult> Add(Level level)
+        public async Task<IActionResult> Add([FromBody]Level level)
         {
             return Ok(await _levelService.Add(level));
         }

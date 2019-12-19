@@ -1,4 +1,4 @@
-﻿using Models;
+﻿using Models.Data;
 using Models.EF;
 using Models.ViewModels.Notification;
 using Microsoft.EntityFrameworkCore;
@@ -10,17 +10,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Service
+namespace Service.Implementation
 {
-    public interface INotificationService : ICommonService<Notification>, IDisposable
-    {
-        Task<bool> UpdateRange(string listID);
-        Task<object> Update(int ID);
-        Task<List<NotificationViewModel>> ListNotifications(int userid);
-        Task<bool> IsSend();
-        Task<bool> AddSendMail(StateSendMail stateSendMail);
-        List<NotificationViewModel> GetHistoryNotification(int userid);
-    }
+   
     public class NotificationService : INotificationService
     {
         private readonly DataContext _dbContext;

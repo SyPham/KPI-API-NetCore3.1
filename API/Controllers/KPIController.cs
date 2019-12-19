@@ -2,7 +2,7 @@
 using Models.EF;
 using Models.ViewModels.KPILevel;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System.Threading.Tasks;
 using API.Helpers;
 
@@ -56,7 +56,7 @@ namespace API.Controllers
             return Ok(_categoryService.GetAll());
         }
         [HttpPost]
-        public IActionResult UpdateKPILevel(KPILevelForUpdate entity)
+        public IActionResult UpdateKPILevel([FromBody]KPILevelForUpdate entity)
         {
             return Ok(_kpiLevelService.Update(entity));
         }
@@ -67,7 +67,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddKPI(KPI entity)
+        public IActionResult AddKPI([FromBody]KPI entity)
         {
             return Ok(_KPIService.Add(entity));
         }

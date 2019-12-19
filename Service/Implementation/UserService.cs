@@ -1,4 +1,4 @@
-﻿using Models;
+﻿using Models.Data;
 using Models.EF;
 using Microsoft.EntityFrameworkCore;
 using Service;
@@ -11,18 +11,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Service
+namespace Service.Implementation
 {
-    public interface IUserService: IDisposable,ICommonService<User>
-    {
-        Task<bool> AddUserToLevel(int id, int levelid);
-        Task<object> LoadDataUser(int levelid, string code, int page, int pageSize);
-        Task<bool> LockUser(int id);
-        Task<bool> ChangePassword(string username, string newpass);
-        object GetAllMenusByPermissionID(int id);
-        Task<bool> Checkpermisson(int userid);
-        Task<object> GetListAllPermissions(int userid);
-    }
+   
     public class UserService : IUserService
     {
         private readonly DataContext _dbContext;

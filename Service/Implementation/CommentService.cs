@@ -8,16 +8,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Models;
+using Models.Data;
 
-namespace Service
+namespace Service.Implementation
 {
-    public interface ICommentService: IDisposable,ICommonService<Comment>
-    {
-        Task<CommentForReturnViewModel> AddComment(AddCommentViewModel entity, int levelIDOfUserComment);
-        Task<object> ListComments(int dataid, int userid);
-        Task<bool> AddCommentHistory(int userid, int dataid);
-    }
+     
     public class CommentService : ICommentService
     {
         private readonly DataContext _dbContext;

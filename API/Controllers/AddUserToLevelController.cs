@@ -1,7 +1,7 @@
 ﻿
 using API.Helpers;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +21,7 @@ namespace API.Controllers
         }
 
         // GET: AddUserToLevel
-        [HttpPost]
+        [HttpGet("{id}/{levelid}")]
         public async Task<IActionResult> AddUserToLevel(int id, int levelid)
         {
             return Ok(await _userService.AddUserToLevel(id, levelid));

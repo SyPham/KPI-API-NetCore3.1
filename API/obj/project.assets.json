@@ -10259,11 +10259,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "F:\\0.Document\\NetCore3.1\\KPI\\API\\API.csproj",
+      "projectUniqueName": "F:\\0.Document\\NetCore3.1\\Swagger\\KPI-API-NetCore3.1\\API\\API.csproj",
       "projectName": "API",
-      "projectPath": "F:\\0.Document\\NetCore3.1\\KPI\\API\\API.csproj",
+      "projectPath": "F:\\0.Document\\NetCore3.1\\Swagger\\KPI-API-NetCore3.1\\API\\API.csproj",
       "packagesPath": "C:\\Users\\sy.pham\\.nuget\\packages\\",
-      "outputPath": "F:\\0.Document\\NetCore3.1\\KPI\\API\\obj\\",
+      "outputPath": "F:\\0.Document\\NetCore3.1\\Swagger\\KPI-API-NetCore3.1\\API\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
@@ -10282,11 +10282,11 @@
       "frameworks": {
         "netcoreapp3.1": {
           "projectReferences": {
-            "F:\\0.Document\\NetCore3.1\\KPI\\Models\\Models.csproj": {
-              "projectPath": "F:\\0.Document\\NetCore3.1\\KPI\\Models\\Models.csproj"
+            "F:\\0.Document\\NetCore3.1\\Swagger\\KPI-API-NetCore3.1\\Models\\Models.csproj": {
+              "projectPath": "F:\\0.Document\\NetCore3.1\\Swagger\\KPI-API-NetCore3.1\\Models\\Models.csproj"
             },
-            "F:\\0.Document\\NetCore3.1\\KPI\\Service\\Service.csproj": {
-              "projectPath": "F:\\0.Document\\NetCore3.1\\KPI\\Service\\Service.csproj"
+            "F:\\0.Document\\NetCore3.1\\Swagger\\KPI-API-NetCore3.1\\Service\\Service.csproj": {
+              "projectPath": "F:\\0.Document\\NetCore3.1\\Swagger\\KPI-API-NetCore3.1\\Service\\Service.csproj"
             }
           }
         }

@@ -2,7 +2,7 @@
 
 using Models.EF;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System.Threading.Tasks;
 using API.Helpers;
 
@@ -38,12 +38,12 @@ namespace API.Controllers
             return Ok(await _categoryKPILevelService.LoadDataKPILevel(level, category, page, pageSize));
         }
         [HttpPost]
-        public async Task<IActionResult> Add(CategoryKPILevel entity)
+        public async Task<IActionResult> Add([FromBody]CategoryKPILevel entity)
         {
             return Ok(await _categoryKPILevelService.Add(entity));
         }
         [HttpPost]
-        public async Task<IActionResult> AddGeneral(int kpilevel, int category, string pic, string owner, string manager, string sponsor, string participant)
+        public async Task<IActionResult> AddGeneral([FromBody]int kpilevel, int category, string pic, string owner, string manager, string sponsor, string participant)
         {
             return Ok(await _categoryKPILevelService.AddGeneral(kpilevel, category, pic, owner, manager, sponsor, participant));
         }
@@ -53,7 +53,7 @@ namespace API.Controllers
             return Ok(await _categoryKPILevelService.GetUserByCategoryIDAndKPILevelID(CategoryID, KPILevelID));
         }
         [HttpPost]
-        public async Task<IActionResult> RemoveCategoryKPILevel(int KPILevelID, int CategoryID)
+        public async Task<IActionResult> RemoveCategoryKPILevel([FromBody]int KPILevelID, int CategoryID)
         {
             return Ok(await _categoryKPILevelService.RemoveCategoryKPILevel(CategoryID, KPILevelID));
         }

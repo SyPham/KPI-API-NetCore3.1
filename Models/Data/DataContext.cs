@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Models
+namespace Models.Data
 {
     public class DataContext : DbContext
     {

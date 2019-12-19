@@ -2,7 +2,7 @@
 
 using Models;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System.Threading.Tasks;
 using API.Helpers;
 
@@ -12,12 +12,10 @@ namespace API.Controllers
     [Route("[controller]/[action]")]
     public class ListUserLevelController : ControllerBase
     {
-        private readonly DataContext _dbContext;
         private readonly IUserService _userService;
 
-        public ListUserLevelController(DataContext dbContext,IUserService userService)
+        public ListUserLevelController( IUserService userService)
         {
-            _dbContext = dbContext;
             _userService = userService;
         }
 

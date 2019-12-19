@@ -4889,11 +4889,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "F:\\0.Document\\NetCore3.1\\KPI\\Models\\Models.csproj",
+      "projectUniqueName": "F:\\0.Document\\NetCore3.1\\Swagger\\KPI-API-NetCore3.1\\Models\\Models.csproj",
       "projectName": "Models",
-      "projectPath": "F:\\0.Document\\NetCore3.1\\KPI\\Models\\Models.csproj",
+      "projectPath": "F:\\0.Document\\NetCore3.1\\Swagger\\KPI-API-NetCore3.1\\Models\\Models.csproj",
       "packagesPath": "C:\\Users\\sy.pham\\.nuget\\packages\\",
-      "outputPath": "F:\\0.Document\\NetCore3.1\\KPI\\Models\\obj\\",
+      "outputPath": "F:\\0.Document\\NetCore3.1\\Swagger\\KPI-API-NetCore3.1\\Models\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"

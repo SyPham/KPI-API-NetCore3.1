@@ -1,6 +1,6 @@
 ﻿using Models.EF;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using API.Helpers;
@@ -19,14 +19,14 @@ namespace API.Controllers
             _menuService = menuService;
         }
         [HttpPost]
-        public async Task<IActionResult> Add(Menu entity)
+        public async Task<IActionResult> Add([FromBody]Menu entity)
         {
             if (await _menuService.Add(entity))
                 return Ok();
             return BadRequest();
         }
         [HttpPost]
-        public async Task<IActionResult> Update(Menu entity)
+        public async Task<IActionResult> Update([FromBody]Menu entity)
         {
             if (await _menuService.Update(entity))
                 if (await _menuService.Update(entity))

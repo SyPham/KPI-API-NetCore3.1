@@ -1,44 +1,34 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using API.Helpers;
 using API.SignalR;
-using Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using Service;
-using Service.Helpers;
-using Newtonsoft.Json;
-using Microsoft.EntityFrameworkCore.Diagnostics;
+using Service.Interface;
+
 using System.Net;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Logging;
 using AutoMapper;
 using Newtonsoft.Json.Serialization;
-using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.OpenApi.Models;
+using Service.Implementation;
+using Models.Data;
 
 namespace API
 {
     public class Startup
     {
-        private IWebHostEnvironment CurrentEnvironment { get; set; }
-        public Startup(IConfiguration configuration, IWebHostEnvironment env)
+        public Startup(IConfiguration configuration)
         {
-            CurrentEnvironment = env;
             Configuration = configuration;
         }
 
@@ -51,7 +41,7 @@ namespace API
            
             // configure strongly typed settings objects
             var appSettingsSection = Configuration.GetSection("AppSettings");
-            services.Configure<Helpers.AppSettings>(appSettingsSection);
+            services.Configure<AppSettings>(appSettingsSection);
 
             services.AddCors();
             services.AddControllers().AddNewtonsoftJson(options =>
@@ -61,7 +51,7 @@ namespace API
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
-                c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+                //c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
             });
             var conn = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<DataContext>(x => x.UseSqlServer(conn));
@@ -120,7 +110,6 @@ namespace API
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "KPI System");
-                c.RoutePrefix = string.Empty;
             });
             if (env.IsDevelopment())
             {

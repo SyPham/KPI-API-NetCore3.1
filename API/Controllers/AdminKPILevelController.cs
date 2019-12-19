@@ -2,7 +2,7 @@
 using Models.EF;
 using Models.ViewModels.KPILevel;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using API.Helpers;
@@ -50,14 +50,14 @@ namespace API.Controllers
         //}
         //update kpiLevel
         [HttpPost]
-        public async Task<IActionResult> UpdateKPILevel(KPILevelForUpdate entity)
+        public async Task<IActionResult> UpdateKPILevel([FromBody]KPILevelForUpdate entity)
         {
             return Ok(await _KPILevelService.Update(entity));
         }
 
         //update kpiLevel
         [HttpPost]
-        public async Task<IActionResult> Update(KPILevelForUpdate entity)
+        public async Task<IActionResult> Update([FromBody]KPILevelForUpdate entity)
         {
             return Ok(await _KPILevelService.UpdateKPILevel(entity));
         }

@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Service;
+using Service.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,18 +68,19 @@ namespace API.Helpers
                 Credentials = new NetworkCredential(_configuration["MailSettings:UserName"], _configuration["MailSettings:Password"])
             };
 
-            MailMessage mailMessage = new MailMessage();
-            mailMessage.From = new MailAddress(_configuration["MailSettings:FromEmail"], _configuration["MailSettings:FromName"]);
+            using MailMessage mailMessage = new MailMessage()
+            {
+                From = new MailAddress(_configuration["MailSettings:FromEmail"], _configuration["MailSettings:FromName"]),
+                IsBodyHtml = true,
+                Body = message,
+                Subject = subject,
+                Priority = MailPriority.High,
+                BodyEncoding = System.Text.Encoding.UTF8
+            };
             foreach (var email in emails)
             {
                 mailMessage.To.Add(email);
             }
-            mailMessage.IsBodyHtml = true;
-            mailMessage.Body = message;
-            mailMessage.Subject = subject;
-            mailMessage.Priority = MailPriority.High;
-            mailMessage.BodyEncoding = System.Text.Encoding.UTF8;
-
 
             try
             {

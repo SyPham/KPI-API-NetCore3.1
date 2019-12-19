@@ -1,6 +1,6 @@
 ﻿using Models.EF;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using API.Helpers;
@@ -24,11 +24,12 @@ namespace API.Controllers
         /// <param name="entity"></param>
         /// <returns>True or False</returns>
         [HttpPost]
-        public async Task<IActionResult> Add(KPI entity)
+        public async Task<IActionResult> Add([FromBody]KPI entity)
         {
             return Ok(await _KPIService.Add(entity));
         }
-        public async Task<IActionResult> AddKPILevel(KPILevel entity)
+        [HttpPost]
+        public async Task<IActionResult> AddKPILevel([FromBody]KPILevel entity)
         {
             return Ok(await _KPIService.AddKPILevel(entity));
         }
@@ -37,18 +38,17 @@ namespace API.Controllers
         {
             return Ok(await _KPIService.GetAll());
         }
-        [HttpPost]
+        [HttpGet("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             return Ok(await _KPIService.Delete(id));
         }
         [HttpPost]
-        public async Task<IActionResult> Update(KPI entity)
+        public async Task<IActionResult> Update([FromBody]KPI entity)
         {
             return Ok(await _KPIService.Update(entity));
         }
-        [HttpGet]
-        [Route("{ID}")]
+        [HttpGet("{ID}")]
         public async Task<IActionResult> GetbyID(int ID)
         {
             return Ok(await _KPIService.GetById(ID));

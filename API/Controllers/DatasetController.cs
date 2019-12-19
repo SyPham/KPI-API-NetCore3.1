@@ -1,6 +1,6 @@
 ﻿
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System;
 using System.Threading.Tasks;
 
@@ -22,7 +22,7 @@ namespace API.Controllers
         [HttpGet("{catid}/{period}/{start}/{end}/{year}")]
         public async Task<ActionResult> GetAllDataByCategory(int catid, string period, int? start, int? end, int? year)
         {
-            year = year ?? DateTime.Now.Year;
+            year ??= DateTime.Now.Year;
             return Ok(await _dataService.GetAllDataByCategory(catid, period, start, end, year));
         }
     }

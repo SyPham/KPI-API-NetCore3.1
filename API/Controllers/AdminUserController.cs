@@ -1,7 +1,7 @@
 ﻿
 using Models.EF;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System.Threading.Tasks;
 using API.Helpers;
 
@@ -23,7 +23,7 @@ namespace API.Controllers
 
         // GET: Account
         [HttpPost]
-        public async Task<IActionResult> Add(User entity)
+        public async Task<IActionResult> Add([FromBody]User entity)
         {
             return Ok(await _userService.Add(entity));
         }
@@ -38,13 +38,13 @@ namespace API.Controllers
         {
             return Ok(await _userService.GetAllPaging(search, page, pageSize));
         }
-        [HttpPost]
+        [HttpGet("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             return Ok(await _userService.Remove(id));
         }
         [HttpPost]
-        public async Task<IActionResult> Update(User entity)
+        public async Task<IActionResult> Update([FromBody]User entity)
         {
             return Ok(await _userService.Update(entity));
         }
@@ -84,7 +84,7 @@ namespace API.Controllers
             return Ok(await _userService.Checkpermisson(userid));
         }
         [HttpPost]
-        public async Task<IActionResult> ChangePassword(string username, string password)
+        public async Task<IActionResult> ChangePassword([FromBody]string username, string password)
         {
             return Ok(await _userService.ChangePassword(username, password));
         }

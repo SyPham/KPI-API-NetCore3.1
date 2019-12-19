@@ -3,7 +3,7 @@ using System;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using API.Helpers;
 using Microsoft.Extensions.Configuration;
 using Service.Helpers;
@@ -167,7 +167,7 @@ namespace API.Controllers
                 }
 
             }
-            return Ok(new { arrayID = listID.ToArray(), total = total, data = listNotifications });
+            return Ok(new { arrayID = listID.ToArray(), total, data = listNotifications });
         }
         [HttpGet]
         public IActionResult ListHistoryNotification()

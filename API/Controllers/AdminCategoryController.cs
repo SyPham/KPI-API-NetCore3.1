@@ -1,6 +1,6 @@
 ﻿using Models.EF;
 using Microsoft.AspNetCore.Mvc;
-using Service;
+using Service.Interface;
 using System.Threading.Tasks;
 using API.Helpers;
 
@@ -19,12 +19,12 @@ namespace API.Controllers
         // GET: Category
 
         [HttpPost]
-        public async Task<IActionResult> Add(Category entity)
+        public async Task<IActionResult> Add( [FromBody]Category entity)
         {
             return Ok(await _categoryService.Add(entity));
         }
         [HttpPost]
-        public async Task<IActionResult> Update(Category entity)
+        public async Task<IActionResult> Update([FromBody]Category entity)
         {
             return Ok(await _categoryService.Update(entity));
         }
@@ -33,7 +33,7 @@ namespace API.Controllers
         {
             return Ok(await _categoryService.GetAll());
         }
-        [HttpPost]
+        [HttpGet("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             return Ok(await _categoryService.Remove(id));
