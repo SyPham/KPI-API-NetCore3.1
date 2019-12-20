@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Service.Helpers;
 using Service.Interface;
+using Microsoft.Extensions.Configuration;
 
 namespace Service.Implementation
 {
@@ -20,11 +21,13 @@ namespace Service.Implementation
     {
         private readonly DataContext _dbContext;
         private readonly ILevelService _levelService;
+        private readonly IConfiguration _configuration;
 
-        public DataService(DataContext dbContext, ILevelService levelService)
+        public DataService(DataContext dbContext, ILevelService levelService,IConfiguration configuration)
         {
             _dbContext = dbContext;
             _levelService = levelService;
+            _configuration = configuration;
         }
 
         private bool disposed = false;
@@ -1542,14 +1545,130 @@ namespace Service.Implementation
 
             return Tuple.Create(listCreateData, listUpdateData);
         }
+        public async Task<string> GetKPIName(string code)
+        {
+            var item = await _dbContext.KPILevels.FirstOrDefaultAsync(x => x.KPILevelCode == code && x.Checked == true);
+            var kpilevelID = item.KPIID;
+            var listCategory = await _dbContext.KPIs.Where(x => x.ID == kpilevelID).FirstOrDefaultAsync();
+            return listCategory.Name;
+        }
+        /// <summary>
+        /// Hàm này dùng để tìm CÁC category của mỗi kpilevelcode
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        private async Task<List<int>> GetAllCategoryByKPILevel(string code)
+        {
+            var item = await _dbContext.KPILevels.FirstOrDefaultAsync(x => x.KPILevelCode == code && x.Checked == true);
+            var kpilevelID = item.ID;
+            var listCategory = await _dbContext.CategoryKPILevels.Where(x => x.KPILevelID == kpilevelID && x.Status == true).Select(x => x.CategoryID).ToListAsync();
+            return listCategory;
+        }
+        /// <summary>
+        /// Hàm này dùng để tạo url chuyển tới trang ChartPriod của từng data khi update hoặc create
+        /// </summary>
+        /// <param name="datas"></param>
+        /// <returns></returns>
+        private async Task<List<string[]>> ListURLToChartPriodAsync(List<Data> datas)
+        {
+            var listURLToChartPeriod = new List<string[]>();
+            string url = string.Empty;
+            var http = _configuration.GetSection("AppSettings:URL").Value.ToSafetyString();
+
+            foreach (var item in datas.DistinctBy(x => x.KPILevelCode))
+            {
+                var oc = _levelService.GetNode(item.KPILevelCode);
+                var kpiname = await GetKPIName(item.KPILevelCode);
+                var listCategories = await GetAllCategoryByKPILevel(item.KPILevelCode);
+                if (item.Period == "W")
+                {
+
+                    foreach (var cat in listCategories)
+                    {
+                        url = http + $"/ChartPeriod/?kpilevelcode={item.KPILevelCode}&catid={cat}&period={item.Period}&year={DateTime.Now.Year}&start=1&end=53";
+                        listURLToChartPeriod.Add(new string[3]
+                                           {
+                                url,kpiname,oc
+                                           });
+                    }
+
+                }
+                if (item.Period == "M")
+                {
+                    foreach (var cat in listCategories)
+                    {
+                        url = http + $"/ChartPeriod/?kpilevelcode={item.KPILevelCode}&catid={cat}&period={item.Period}&year={DateTime.Now.Year}&start=1&end=12";
+                        listURLToChartPeriod.Add(new string[3]
+                        {
+                                url,kpiname,oc
+                        });
+                    }
+                }
+                if (item.Period == "Q")
+                {
+                    foreach (var cat in listCategories)
+                    {
+                        url = http + $"/ChartPeriod/?kpilevelcode={item.KPILevelCode}&catid={cat}&period={item.Period}&year={DateTime.Now.Year}&start=1&end=4";
+                        listURLToChartPeriod.Add(new string[3]
+                        {
+                                url,kpiname,oc
+                        });
+                    }
+                }
+                if (item.Period == "Y")
+                {
+                    foreach (var cat in listCategories)
+                    {
+                        url = http + $"/ChartPeriod/?kpilevelcode={item.KPILevelCode}&catid={cat}&period={item.Period}&year={DateTime.Now.Year}&start={DateTime.Now.Year}&end={DateTime.Now.Year}";
+                        listURLToChartPeriod.Add(new string[3]
+                        {
+                                    url,kpiname,oc
+                        });
+                    }
+                }
+            }
+            return listURLToChartPeriod;
+
+        }
+        /// <summary>
+        /// Hàm này dùng để xem chi tiết cụ thể của thông báo
+        /// </summary>
+        /// <param name="datas"></param>
+        /// <param name="users"></param>
+        /// <param name="notificationId"></param>
+        /// <returns></returns>
+        public async Task CreateNotificationDetails(List<string[]> datas, IEnumerable<int> users, int notificationId)
+        {
+            var listNotification = new List<NotificationDetail>();
+            foreach (var item in users)
+            {
+                foreach (var item2 in datas)
+                {
+                    listNotification.Add(new NotificationDetail
+                    {
+                        Content = item2[1] + " ( " + item2[2] + " ) ",
+                        URL = item2[0],
+                        NotificationID = notificationId,
+                        UserID = item
+                    });
+                }
+            }
+
+            _dbContext.NotificationDetails.AddRange(listNotification);
+            await _dbContext.SaveChangesAsync();
+        }
         public async Task<ImportDataViewModel> ImportData(List<UploadDataViewModel> entity, string userUpdate, int userId)
         {
             #region *) Biến toàn cục
-            var listAdd = new List<Models.EF.Data>();
-            var listTag = new List<Models.EF.Tag >();
+            var URL = _configuration.GetSection("AppSettings:URL").Value.ToSafetyString();
+
+            var listAdd = new List<Data>();
+            var listTag = new List<Tag>();
             var listSendMail = new List<string>();
             var listUploadKPIVMs = new List<UploadKPIViewModel>();
             var listDataSuccess = new List<UploadKPIViewModel>();
+
+
             var dataModel = _dbContext.Datas;
             var kpiLevelModel = _dbContext.KPILevels;
             var kpiModel = _dbContext.KPIs;
@@ -1608,10 +1727,11 @@ namespace Service.Implementation
                     var listKPILevelID = _dbContext.KPILevels.Where(a => listKPILevel.Contains(a.KPILevelCode)).Select(a => a.ID).ToArray();
 
                     #region *) Lưu vào bảng thông báo
-                    var notify = new Models.EF.Notification();
+                    var notify = new Notification();
                     notify.Content = "You have just uploaded some KPIs.";
                     notify.Action = "Upload";
                     notify.TaskName = "Upload KPI Data";
+                    notify.Link = URL + "/Home/ListSubNotificationDetail/";
                     notify.UserID = userId;
                     _dbContext.Notifications.Add(notify);
                     await _dbContext.SaveChangesAsync();
@@ -1622,35 +1742,13 @@ namespace Service.Implementation
                     var listSponsor = (await _dbContext.Sponsors.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
                     var listUpdater = (await _dbContext.Uploaders.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
                     var listAll = listManager.Union(listOwner).Union(listOwner).Union(listSponsor).Union(listUpdater);
-                    foreach (var userID in listAll)
-                    {
-                        var tag = new Tag();
-                        tag.UserID = userID;
-                        tag.NotificationID = notify.ID;
-                        tag.IsUpload = true;
-                        listTag.Add(tag);
-                    }
-                    #endregion
-                    #region *) Thêm vào bảng chi tiết thông báo
-                    var listDetails = new List<NotificationDetail>();
-                    if (listTag.Count > 0)
-                    {
-                        foreach (var usertag in listTag)
-                        {
-                            var detail = new NotificationDetail();
-                            detail.UserID = usertag.UserID;
-                            detail.Seen = false;
-                            detail.NotificationID = notify.ID;
-                            listDetails.Add(detail);
-                            var email = _dbContext.Users.Find(usertag.UserID)?.Email;
-                            listSendMail.Add(email);
-                        }
-                        _dbContext.NotificationDetails.AddRange(listDetails);
-                        _dbContext.Tags.AddRange(listTag);
-                        await _dbContext.SaveChangesAsync();
-                    }
                     #endregion
 
+
+                    #region *) Thêm vào bảng chi tiết thông báo
+                    var listUrls = await ListURLToChartPriodAsync(listCreate);
+                    await CreateNotificationDetails(listUrls, listAll, notify.ID);
+                    #endregion
                 }
                 #endregion
                 #region *) Cập nhật
@@ -1729,6 +1827,7 @@ namespace Service.Implementation
                     notify.Action = "Upload";
                     notify.TaskName = "Upload KPI Data";
                     notify.UserID = userId;
+                    notify.Link = URL + "/Home/ListSubNotificationDetail/";
                     _dbContext.Notifications.Add(notify);
                     await _dbContext.SaveChangesAsync();
                     #endregion
@@ -1738,33 +1837,10 @@ namespace Service.Implementation
                     var listSponsor = (await _dbContext.Sponsors.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
                     var listUpdater = (await _dbContext.Uploaders.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
                     var listAll = listManager.Union(listOwner).Union(listOwner).Union(listSponsor).Union(listUpdater);
-                    foreach (var userID in listAll)
-                    {
-                        var tag = new Tag();
-                        tag.UserID = userID;
-                        tag.NotificationID = notify.ID;
-                        tag.IsUpload = true;
-                        listTag.Add(tag);
-                    }
                     #endregion
                     #region *) Thêm vào bảng chi tiết thông báo
-                    var listDetails = new List<NotificationDetail>();
-                    if (listTag.Count > 0)
-                    {
-                        foreach (var usertag in listTag)
-                        {
-                            var detail = new NotificationDetail();
-                            detail.UserID = usertag.UserID;
-                            detail.Seen = false;
-                            detail.NotificationID = notify.ID;
-                            listDetails.Add(detail);
-                            var email = _dbContext.Users.Find(usertag.UserID)?.Email;
-                            listSendMail.Add(email);
-                        }
-                        _dbContext.NotificationDetails.AddRange(listDetails);
-                        _dbContext.Tags.AddRange(listTag);
-                        await _dbContext.SaveChangesAsync();
-                    }
+                    var listUrls = await ListURLToChartPriodAsync(listUpdate);
+                    await CreateNotificationDetails(listUrls, listAll, notify.ID);
                     #endregion
                 }
 

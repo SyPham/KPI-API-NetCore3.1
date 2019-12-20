@@ -14,6 +14,8 @@ namespace Models.EF
         public int UserID { get; set; }
         public int NotificationID { get; set; }
         public bool Seen { get; set; }
+        public string Content { get; set; }
+        public string URL { get; set; }
         public string Action { get; set; }
         [Column(TypeName = "datetime")]
         private DateTime? createTime = null;
