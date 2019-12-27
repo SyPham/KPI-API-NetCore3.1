@@ -16,37 +16,21 @@ using Microsoft.Extensions.Configuration;
 
 namespace Service.Implementation
 {
-   
-    public class DataService: IDataService
+
+    public class DataService : IDataService
     {
         private readonly DataContext _dbContext;
         private readonly ILevelService _levelService;
         private readonly IConfiguration _configuration;
 
-        public DataService(DataContext dbContext, ILevelService levelService,IConfiguration configuration)
+        public DataService(DataContext dbContext, ILevelService levelService, IConfiguration configuration)
         {
             _dbContext = dbContext;
             _levelService = levelService;
             _configuration = configuration;
         }
 
-        private bool disposed = false;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!this.disposed)
-            {
-                if (disposing)
-                {
-                    _dbContext.Dispose();
-                }
-            }
-            this.disposed = true;
-        }
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+
         public async Task<List<ManagerOwnerUpdaterSponsorParticipantViewModel>> GetAllManagerOwnerUpdaterSponsorParticipant(int categoryID)
         {
             var managers = _dbContext.Managers;
@@ -158,21 +142,21 @@ namespace Service.Implementation
                             dataremarks = dataremarks.Where(x => x.Week >= start && x.Week <= end).ToList();
                         }
 
-                        var datasetsvm = new DatasetViewModel();
-                        datasetsvm.KPIName = item.KPIName;
-                        datasetsvm.Manager = obj.Manager;
-                        datasetsvm.Owner = obj.Owner;
-                        datasetsvm.Updater = obj.Updater;
-                        datasetsvm.Sponsor = obj.Sponsor;
-                        datasetsvm.Participant = obj.Participant;
-                        datasetsvm.CategoryName = tblCategory.Name;
-                        datasetsvm.CategoryCode = categorycode;
-                        datasetsvm.KPILevelCode = item.KPILevelCode;
+                        listDatasetViewModel.Add(new DatasetViewModel
+                        {
+                            KPIName = item.KPIName,
+                            Manager = obj.Manager,
+                            Owner = obj.Owner,
+                            Updater = obj.Updater,
+                            Sponsor = obj.Sponsor,
+                            Participant = obj.Participant,
+                            CategoryName = tblCategory.Name,
+                            CategoryCode = categorycode,
+                            KPILevelCode = item.KPILevelCode,
 
-                        datasetsvm.Datasets = dataremarks;
-                        datasetsvm.Period = "Weekly";
-
-                        listDatasetViewModel.Add(datasetsvm);
+                            Datasets = dataremarks,
+                            Period = "Weekly"
+                        });
 
                     }
                 }
@@ -211,21 +195,22 @@ namespace Service.Implementation
                         {
                             dataremarks = dataremarks.Where(x => x.Week >= start && x.Week <= end).ToList();
                         }
-                        var datasetsvm = new DatasetViewModel();
-                        datasetsvm.KPIName = item.KPIName;
-                        datasetsvm.Manager = obj.Manager;
-                        datasetsvm.Owner = obj.Owner;
-                        datasetsvm.Updater = obj.Updater;
-                        datasetsvm.Sponsor = obj.Sponsor;
-                        datasetsvm.Participant = obj.Participant;
-                        datasetsvm.CategoryName = tblCategory.Name;
-                        datasetsvm.CategoryCode = categorycode;
-                        datasetsvm.KPILevelCode = item.KPILevelCode;
 
-                        datasetsvm.Datasets = dataremarks;
-                        datasetsvm.Period = "Monthly";
+                        listDatasetViewModel.Add(new DatasetViewModel
+                        {
+                            KPIName = item.KPIName,
+                            Manager = obj.Manager,
+                            Owner = obj.Owner,
+                            Updater = obj.Updater,
+                            Sponsor = obj.Sponsor,
+                            Participant = obj.Participant,
+                            CategoryName = tblCategory.Name,
+                            CategoryCode = categorycode,
+                            KPILevelCode = item.KPILevelCode,
 
-                        listDatasetViewModel.Add(datasetsvm);
+                            Datasets = dataremarks,
+                            Period = "Monthly",
+                        });
 
                     }
                 }
@@ -263,21 +248,22 @@ namespace Service.Implementation
                         {
                             dataremarks = dataremarks.Where(x => x.Week >= start && x.Week <= end).ToList();
                         }
-                        var datasetsvm = new DatasetViewModel();
-                        datasetsvm.KPIName = item.KPIName;
-                        datasetsvm.Manager = obj.Manager;
-                        datasetsvm.Owner = obj.Owner;
-                        datasetsvm.Updater = obj.Updater;
-                        datasetsvm.Sponsor = obj.Sponsor;
-                        datasetsvm.Participant = obj.Participant;
-                        datasetsvm.CategoryName = tblCategory.Name;
-                        datasetsvm.CategoryCode = categorycode;
-                        datasetsvm.KPILevelCode = item.KPILevelCode;
 
-                        datasetsvm.Datasets = dataremarks;
-                        datasetsvm.Period = "Quarterly";
+                        listDatasetViewModel.Add(new DatasetViewModel()
+                        {
+                            KPIName = item.KPIName,
+                            Manager = obj.Manager,
+                            Owner = obj.Owner,
+                            Updater = obj.Updater,
+                            Sponsor = obj.Sponsor,
+                            Participant = obj.Participant,
+                            CategoryName = tblCategory.Name,
+                            CategoryCode = categorycode,
+                            KPILevelCode = item.KPILevelCode,
 
-                        listDatasetViewModel.Add(datasetsvm);
+                            Datasets = dataremarks,
+                            Period = "Quarterly",
+                        });
 
                     }
                 }
@@ -329,7 +315,21 @@ namespace Service.Implementation
                         datasetsvm.Datasets = dataremarks;
                         datasetsvm.Period = "Yearly";
 
-                        listDatasetViewModel.Add(datasetsvm);
+                        listDatasetViewModel.Add(new DatasetViewModel
+                        {
+                            KPIName = item.KPIName,
+                            Manager = obj.Manager,
+                            Owner = obj.Owner,
+                            Updater = obj.Updater,
+                            Sponsor = obj.Sponsor,
+                            Participant = obj.Participant,
+                            CategoryName = tblCategory.Name,
+                            CategoryCode = categorycode,
+                            KPILevelCode = item.KPILevelCode,
+
+                            Datasets = dataremarks,
+                            Period = "Yearly"
+                        });
                     }
                 }
             }
@@ -966,7 +966,7 @@ namespace Service.Implementation
             }
             return model;
         }
-       
+
         public ChartViewModel2 Compare2(string kpilevelcode, string period)
         {
 
@@ -1108,7 +1108,7 @@ namespace Service.Implementation
             var listChartVM = new List<ChartViewModel2>();
             var value = obj.Split('-');
 
-            var size = value.Length;
+            // var size = value.Length;
             foreach (var item in value)
             {
                 var kpilevelcode = item.Split(',')[0];
@@ -1185,7 +1185,7 @@ namespace Service.Implementation
                 return new DataCompareViewModel();
             }
         }
-       
+
         public async Task<object> Remark(int dataid)
         {
             var model = await _dbContext.Datas.FirstOrDefaultAsync(x => x.ID == dataid);
@@ -1298,7 +1298,7 @@ namespace Service.Implementation
             return vm;
         }
 
-     
+
         public string GetValueData(string KPILevelCode, string CharacterPeriod, int period)
         {
             var value = CharacterPeriod.ToSafetyString();
@@ -1360,524 +1360,40 @@ namespace Service.Implementation
         public List<DataExportViewModel> DataExport(int userid)
         {
             var datas = _dbContext.Datas;
-            var kpis = _dbContext.KPIs;
-            var model = (from u in _dbContext.Uploaders.Where(x => x.UserID == userid).DistinctBy(x => x.KPILevelID)
-                         join kpiLevel in _dbContext.KPILevels on u.KPILevelID equals kpiLevel.ID
-                         join cat in _dbContext.CategoryKPILevels.Where(x => x.Status == true) on u.KPILevelID equals cat.KPILevelID
-                         join kpi in _dbContext.KPIs on kpiLevel.KPIID equals kpi.ID
-                         join l in _dbContext.Levels on kpiLevel.LevelID equals l.ID
-                         where kpiLevel.Checked == true
-                         select new DataExportViewModel
-                         {
-                             Area = l.Name,
-                             KPILevelCode = kpiLevel.KPILevelCode,
-                             KPIName = kpi.Name,
-                             StateW = kpiLevel.WeeklyChecked ?? false,
-                             StateM = kpiLevel.MonthlyChecked ?? false,
-                             StateQ = kpiLevel.QuarterlyChecked ?? false,
-                             StateY = kpiLevel.YearlyChecked ?? false,
-
-                             PeriodValueW = datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).FirstOrDefault() != null ? (int?)datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).Max(x => x.Week) ?? 0 : 0,
-                             PeriodValueM = datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).FirstOrDefault() != null ? (int?)datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).Max(x => x.Month) ?? 0 : 0,
-                             PeriodValueQ = datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).FirstOrDefault() != null ? (int?)datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).Max(x => x.Quarter) ?? 0 : 0,
-                             PeriodValueY = datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).FirstOrDefault() != null ? (int?)datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).Max(x => x.Year) ?? 0 : 0,
-
-                             UploadTimeW = kpiLevel.Weekly,
-                             UploadTimeM = kpiLevel.Monthly,
-                             UploadTimeQ = kpiLevel.Quarterly,
-                             UploadTimeY = kpiLevel.Yearly,
-                             //TargetValueW = kpi.Unit == 1 ? "not require" : "require"
-                         }).ToList();
-
-            return model;
-        }
-        /// <summary>
-        /// Kiểm tra tồn tại Data
-        /// </summary>
-        /// <param name="kpilevelcode"></param>
-        /// <param name="period"></param>
-        /// <param name="periodValue"></param>
-        /// <param name="year"></param>
-        /// <returns></returns>
-        public Models.EF.Data IsExistKPILevelData(string kpilevelcode, string period, int periodValue, int year)
-        {
-            switch (period.ToSafetyString().ToUpper())
-            {
-                case "W":
-                    return _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period && x.Week == periodValue && x.Yearly == year);
-                case "M":
-                    return _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period && x.Month == periodValue && x.Yearly == year);
-                case "Q":
-                    return _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period && x.Quarter == periodValue && x.Yearly == year);
-                case "Y":
-                    return _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period && x.Year == periodValue && x.Yearly == year);
-
-                default:
-                    return null;
-            }
-        }
-        /// <summary>
-        /// Lọc dữ liệu "Tạo mới" và "Cập nhật" đọc từ file Excel.
-        /// </summary>
-        /// <param name="entity">Danh sách đọc từ excel</param>
-        /// <returns>Trả về 2 danh sách "Tạo mới" và "Cập nhật" đọc từ file Excel</returns>
-        public Tuple<List<Models.EF.Data>, List<Models.EF.Data>> CreateOrUpdateData(List<UploadDataViewModel> entity)
-        {
-            List<Models.EF.Data> listCreateData = new List<Models.EF.Data>();
-            List<Models.EF.Data> listUpdateData = new List<Models.EF.Data>();
-            List<UploadDataViewModel> list = new List<UploadDataViewModel>();
-            foreach (var item in entity)
-            {
-                var value = item.KPILevelCode;
-                var kpilevelcode = value.Substring(0, value.Length - 1);
-                var period = value.Substring(value.Length - 1, 1);
-                var year = item.Year; //dữ liệu trong năm vd: năm 2019
-                var valuePeriod = item.Value;
-                var target = item.TargetValue;
-                //query trong bảng data nếu updated thì update lại db
-                var isExistData = IsExistKPILevelData(kpilevelcode, period, item.PeriodValue, year);
-                switch (period)
-                {
-                    case "W":
-                        var dataW = new Models.EF.Data();
-                        dataW.KPILevelCode = kpilevelcode;
-                        dataW.Value = item.Value;
-                        dataW.Week = item.PeriodValue;
-                        dataW.Yearly = year;
-                        dataW.CreateTime = item.CreateTime;
-                        dataW.Period = period;
-                        if (item.TargetValue.ToDouble() > 0)
-                            dataW.Target = item.TargetValue.ToString();
-                        else dataW.Target = "0";
-                        if (isExistData == null)
-                            listCreateData.Add(dataW);
-                        else if (isExistData != null)
-                        {
-                            if (dataW.Value != valuePeriod || dataW.Target != target)
-                            {
-                                dataW.ID = isExistData.ID;
-                                listUpdateData.Add(dataW);
-                            }
-                        }
-                        else
-                            list.Add(item);
-                        break;
-                    case "M":
-                        var dataM = new Models.EF.Data();
-                        dataM.KPILevelCode = kpilevelcode;
-                        dataM.Value = item.Value;
-                        dataM.Month = item.PeriodValue;
-                        dataM.Yearly = year;
-                        dataM.CreateTime = item.CreateTime;
-                        dataM.Period = period;
-
-                        if (item.TargetValue.ToDouble() > 0)
-                            dataM.Target = item.TargetValue.ToString();
-                        else dataM.Target = "0";
-                        if (isExistData == null)
-                            listCreateData.Add(dataM);
-                        else if (isExistData != null)
-                        {
-                            if (isExistData.Value != valuePeriod || isExistData.Target != target)
-                            {
-                                dataM.ID = isExistData.ID;
-                                listUpdateData.Add(dataM);
-                            }
-                        }
-                        else
-                            list.Add(item);
-                        break;
-                    case "Q":
-                        var dataQ = new Models.EF.Data();
-                        dataQ.KPILevelCode = kpilevelcode;
-                        dataQ.Value = item.Value;
-                        dataQ.Quarter = item.PeriodValue;
-                        dataQ.Yearly = year;
-                        dataQ.CreateTime = item.CreateTime;
-                        dataQ.Period = period;
-
-                        if (item.TargetValue.ToDouble() > 0)
-                            dataQ.Target = item.TargetValue.ToString();
-                        else dataQ.Target = "0";
-                        if (isExistData == null)
-                            listCreateData.Add(dataQ);
-                        else if (isExistData != null)
-                        {
-                            if (isExistData.Value != valuePeriod || isExistData.Target != target)
-                            {
-                                dataQ.ID = isExistData.ID;
-                                listUpdateData.Add(dataQ);
-                            }
-                        }
-                        else
-                            list.Add(item);
-                        break;
-                    case "Y":
-                        var dataY = new Models.EF.Data();
-                        dataY.KPILevelCode = kpilevelcode;
-                        dataY.Value = item.Value;
-                        dataY.Year = item.PeriodValue;
-                        dataY.Yearly = year;
-                        dataY.CreateTime = item.CreateTime;
-                        dataY.Period = period;
-
-                        if (item.TargetValue.ToDouble() > 0)
-                            dataY.Target = item.TargetValue.ToString();
-                        else dataY.Target = "0";
-                        if (isExistData == null)
-                            listCreateData.Add(dataY);
-                        else if (isExistData != null)
-                        {
-                            if (isExistData.Value != valuePeriod || isExistData.Target != target)
-                            {
-                                dataY.ID = isExistData.ID;
-                                listUpdateData.Add(dataY);
-                            }
-                        }
-                        else
-                            list.Add(item);
-                        break;
-                    default:
-
-                        break;
-                }
-            }
-
-            return Tuple.Create(listCreateData, listUpdateData);
-        }
-        public async Task<string> GetKPIName(string code)
-        {
-            var item = await _dbContext.KPILevels.FirstOrDefaultAsync(x => x.KPILevelCode == code && x.Checked == true);
-            var kpilevelID = item.KPIID;
-            var listCategory = await _dbContext.KPIs.Where(x => x.ID == kpilevelID).FirstOrDefaultAsync();
-            return listCategory.Name;
-        }
-        /// <summary>
-        /// Hàm này dùng để tìm CÁC category của mỗi kpilevelcode
-        /// </summary>
-        /// <param name="code"></param>
-        /// <returns></returns>
-        private async Task<List<int>> GetAllCategoryByKPILevel(string code)
-        {
-            var item = await _dbContext.KPILevels.FirstOrDefaultAsync(x => x.KPILevelCode == code && x.Checked == true);
-            var kpilevelID = item.ID;
-            var listCategory = await _dbContext.CategoryKPILevels.Where(x => x.KPILevelID == kpilevelID && x.Status == true).Select(x => x.CategoryID).ToListAsync();
-            return listCategory;
-        }
-        /// <summary>
-        /// Hàm này dùng để tạo url chuyển tới trang ChartPriod của từng data khi update hoặc create
-        /// </summary>
-        /// <param name="datas"></param>
-        /// <returns></returns>
-        private async Task<List<string[]>> ListURLToChartPriodAsync(List<Data> datas)
-        {
-            var listURLToChartPeriod = new List<string[]>();
-            string url = string.Empty;
-            var http = _configuration.GetSection("AppSettings:URL").Value.ToSafetyString();
-
-            foreach (var item in datas.DistinctBy(x => x.KPILevelCode))
-            {
-                var oc = _levelService.GetNode(item.KPILevelCode);
-                var kpiname = await GetKPIName(item.KPILevelCode);
-                var listCategories = await GetAllCategoryByKPILevel(item.KPILevelCode);
-                if (item.Period == "W")
-                {
-
-                    foreach (var cat in listCategories)
+            //var uploaders = _dbContext.Uploaders.Where(x => x.UserID == userid).DistinctBy(x => x.KPILevelID);
+            return (from u in _dbContext.Uploaders.Where(x => x.UserID == userid)
+                    join kpiLevel in _dbContext.KPILevels on u.KPILevelID equals kpiLevel.ID
+                    join cat in _dbContext.CategoryKPILevels on u.KPILevelID equals cat.KPILevelID
+                    join kpi in _dbContext.KPIs on kpiLevel.KPIID equals kpi.ID
+                    join l in _dbContext.Levels on kpiLevel.LevelID equals l.ID
+                    where kpiLevel.Checked == true && cat.Status == true
+                    select new DataExportViewModel
                     {
-                        url = http + $"/ChartPeriod/?kpilevelcode={item.KPILevelCode}&catid={cat}&period={item.Period}&year={DateTime.Now.Year}&start=1&end=53";
-                        listURLToChartPeriod.Add(new string[3]
-                                           {
-                                url,kpiname,oc
-                                           });
-                    }
+                        Area = l.Name,
+                        KPILevelCode = kpiLevel.KPILevelCode,
+                        KPIName = kpi.Name,
+                        StateW = kpiLevel.WeeklyChecked ?? false,
+                        StateM = kpiLevel.MonthlyChecked ?? false,
+                        StateQ = kpiLevel.QuarterlyChecked ?? false,
+                        StateY = kpiLevel.YearlyChecked ?? false,
 
-                }
-                if (item.Period == "M")
-                {
-                    foreach (var cat in listCategories)
-                    {
-                        url = http + $"/ChartPeriod/?kpilevelcode={item.KPILevelCode}&catid={cat}&period={item.Period}&year={DateTime.Now.Year}&start=1&end=12";
-                        listURLToChartPeriod.Add(new string[3]
-                        {
-                                url,kpiname,oc
-                        });
-                    }
-                }
-                if (item.Period == "Q")
-                {
-                    foreach (var cat in listCategories)
-                    {
-                        url = http + $"/ChartPeriod/?kpilevelcode={item.KPILevelCode}&catid={cat}&period={item.Period}&year={DateTime.Now.Year}&start=1&end=4";
-                        listURLToChartPeriod.Add(new string[3]
-                        {
-                                url,kpiname,oc
-                        });
-                    }
-                }
-                if (item.Period == "Y")
-                {
-                    foreach (var cat in listCategories)
-                    {
-                        url = http + $"/ChartPeriod/?kpilevelcode={item.KPILevelCode}&catid={cat}&period={item.Period}&year={DateTime.Now.Year}&start={DateTime.Now.Year}&end={DateTime.Now.Year}";
-                        listURLToChartPeriod.Add(new string[3]
-                        {
-                                    url,kpiname,oc
-                        });
-                    }
-                }
-            }
-            return listURLToChartPeriod;
+                        PeriodValueW = datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).FirstOrDefault() != null ? (int?)datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).Max(x => x.Week) ?? 0 : 0,
+                        PeriodValueM = datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).FirstOrDefault() != null ? (int?)datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).Max(x => x.Month) ?? 0 : 0,
+                        PeriodValueQ = datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).FirstOrDefault() != null ? (int?)datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).Max(x => x.Quarter) ?? 0 : 0,
+                        PeriodValueY = datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).FirstOrDefault() != null ? (int?)datas.Where(x => x.KPILevelCode == kpiLevel.KPILevelCode).Max(x => x.Year) ?? 0 : 0,
+
+                        UploadTimeW = kpiLevel.Weekly,
+                        UploadTimeM = kpiLevel.Monthly,
+                        UploadTimeQ = kpiLevel.Quarterly,
+                        UploadTimeY = kpiLevel.Yearly,
+                        //TargetValueW = kpi.Unit == 1 ? "not require" : "require"
+                    }).DistinctBy(x => x.KPILevelCode).ToList();
 
         }
-        /// <summary>
-        /// Hàm này dùng để xem chi tiết cụ thể của thông báo
-        /// </summary>
-        /// <param name="datas"></param>
-        /// <param name="users"></param>
-        /// <param name="notificationId"></param>
-        /// <returns></returns>
-        public async Task CreateNotificationDetails(List<string[]> datas, IEnumerable<int> users, int notificationId)
-        {
-            var listNotification = new List<NotificationDetail>();
-            foreach (var item in users)
-            {
-                foreach (var item2 in datas)
-                {
-                    listNotification.Add(new NotificationDetail
-                    {
-                        Content = item2[1] + " ( " + item2[2] + " ) ",
-                        URL = item2[0],
-                        NotificationID = notificationId,
-                        UserID = item
-                    });
-                }
-            }
 
-            _dbContext.NotificationDetails.AddRange(listNotification);
-            await _dbContext.SaveChangesAsync();
-        }
-        public async Task<ImportDataViewModel> ImportData(List<UploadDataViewModel> entity, string userUpdate, int userId)
-        {
-            #region *) Biến toàn cục
-            var URL = _configuration.GetSection("AppSettings:URL").Value.ToSafetyString();
-
-            var listAdd = new List<Data>();
-            var listTag = new List<Tag>();
-            var listSendMail = new List<string>();
-            var listUploadKPIVMs = new List<UploadKPIViewModel>();
-            var listDataSuccess = new List<UploadKPIViewModel>();
-
-
-            var dataModel = _dbContext.Datas;
-            var kpiLevelModel = _dbContext.KPILevels;
-            var kpiModel = _dbContext.KPIs;
-            var levelModel = _dbContext.Levels;
-            #endregion
-
-            #region *) Lọc dữ liệu làm 2 loại là tạo mới và cập nhật
-            var tuple = CreateOrUpdateData(entity);
-            var listCreate = tuple.Item1;
-            var listUpdate = tuple.Item2;
-            #endregion
-            try
-            {
-                #region *) Tạo mới
-                if (listCreate.Count() > 0)
-                {
-                    _dbContext.Datas.AddRange(listCreate);
-                    await _dbContext.SaveChangesAsync();
-                    //Gui mail list nay khi update
-                    //Tạo mới xong rồi thì thêm vào list gửi mail 
-                    foreach (var item in listCreate)
-                    {
-
-                        var tblKPILevelByKPILevelCode = await kpiLevelModel.FirstOrDefaultAsync(x => x.KPILevelCode == item.KPILevelCode);
-                        if (item.Value.ToDouble() > 0)
-                        {
-                            var dataSuccess = new UploadKPIViewModel()
-                            {
-                                KPILevelCode = item.KPILevelCode,
-                                Area = levelModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.LevelID).Name,
-                                KPIName = kpiModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.KPIID).Name,
-                                Week = item.Week,
-                                Month = item.Month,
-                                Quarter = item.Quarter,
-                                Year = item.Year
-                            };
-                            listDataSuccess.Add(dataSuccess);
-                        }
-                        if (item.Value.ToDouble() < item.Target.ToDouble())
-                        {
-                            var dataUploadKPIVM = new UploadKPIViewModel()
-                            {
-                                KPILevelCode = item.KPILevelCode,
-                                Area = levelModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.LevelID).Name,
-                                KPIName = kpiModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.KPIID).Name,
-                                Week = item.Week,
-                                Month = item.Month,
-                                Quarter = item.Quarter,
-                                Year = item.Year
-                            };
-                            listUploadKPIVMs.Add(dataUploadKPIVM);
-                        }
-                    }
-                    //Tìm ID theo KPILevelCode trong bản KPILevel
-                    var listKPILevel = listCreate.Select(x => x.KPILevelCode).Distinct().ToArray();
-                    var listKPILevelID = _dbContext.KPILevels.Where(a => listKPILevel.Contains(a.KPILevelCode)).Select(a => a.ID).ToArray();
-
-                    #region *) Lưu vào bảng thông báo
-                    var notify = new Notification();
-                    notify.Content = "You have just uploaded some KPIs.";
-                    notify.Action = "Upload";
-                    notify.TaskName = "Upload KPI Data";
-                    notify.Link = URL + "/Home/ListSubNotificationDetail/";
-                    notify.UserID = userId;
-                    _dbContext.Notifications.Add(notify);
-                    await _dbContext.SaveChangesAsync();
-                    #endregion
-                    #region *) Thông báo với các manager, owner, sponsor, updater khi upload xong
-                    var listManager = (await _dbContext.Managers.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
-                    var listOwner = (await _dbContext.Owners.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
-                    var listSponsor = (await _dbContext.Sponsors.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
-                    var listUpdater = (await _dbContext.Uploaders.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
-                    var listAll = listManager.Union(listOwner).Union(listOwner).Union(listSponsor).Union(listUpdater);
-                    #endregion
-
-
-                    #region *) Thêm vào bảng chi tiết thông báo
-                    var listUrls = await ListURLToChartPriodAsync(listCreate);
-                    await CreateNotificationDetails(listUrls, listAll, notify.ID);
-                    #endregion
-                }
-                #endregion
-                #region *) Cập nhật
-                if (listUpdate.Count() > 0)
-                {
-                    foreach (var item in listUpdate)
-                    {
-                        switch (item.Period)
-                        {
-                            case "W":
-                                var dataW = await dataModel.FirstOrDefaultAsync(x => x.KPILevelCode == item.KPILevelCode && x.Period == item.Period && x.Week == item.Week && x.Yearly == item.Yearly);
-                                dataW.Value = item.Value;
-                                dataW.Target = item.Target;
-                                _dbContext.SaveChanges();
-                                break;
-                            case "M":
-                                var dataM = await dataModel.FirstOrDefaultAsync(x => x.KPILevelCode == item.KPILevelCode && x.Period == item.Period && x.Month == item.Month && x.Yearly == item.Yearly);
-                                dataM.Value = item.Value;
-                                dataM.Target = item.Target;
-                                _dbContext.SaveChanges();
-                                break;
-                            case "Q":
-
-                                var dataQ = await dataModel.FirstOrDefaultAsync(x => x.KPILevelCode == item.KPILevelCode && x.Period == item.Period && x.Quarter == item.Quarter && x.Yearly == item.Yearly);
-                                dataQ.Value = item.Value;
-                                dataQ.Target = item.Target;
-                                _dbContext.SaveChanges();
-                                break;
-                            case "Y":
-                                var dataY = await dataModel.FirstOrDefaultAsync(x => x.KPILevelCode == item.KPILevelCode && x.Period == item.Period && x.Year == item.Year && x.Yearly == item.Yearly);
-                                dataY.Value = item.Value;
-                                dataY.Target = item.Target;
-                                _dbContext.SaveChanges();
-                                break;
-                            default:
-                                break;
-                        }
-                        var tblKPILevelByKPILevelCode = await kpiLevelModel.FirstOrDefaultAsync(x => x.KPILevelCode == item.KPILevelCode);
-                        if (item.Value.ToDouble() > 0)
-                        {
-                            var dataSuccess = new UploadKPIViewModel()
-                            {
-                                KPILevelCode = item.KPILevelCode,
-                                Area = levelModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.LevelID).Name,
-                                KPIName = kpiModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.KPIID).Name,
-                                Week = item.Week,
-                                Month = item.Month,
-                                Quarter = item.Quarter,
-                                Year = item.Year
-                            };
-                            listDataSuccess.Add(dataSuccess);
-                        }
-                        //Nếu dữ liệu mà nhỏ hơn mục tiêu thì sẽ gửi mail
-                        if (item.Value.ToDouble() < item.Target.ToDouble())
-                        {
-                            var dataUploadKPIVM = new UploadKPIViewModel()
-                            {
-                                KPILevelCode = item.KPILevelCode,
-                                Area = levelModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.LevelID).Name,
-                                KPIName = kpiModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.KPIID).Name,
-                                Week = item.Week,
-                                Month = item.Month,
-                                Quarter = item.Quarter,
-                                Year = item.Year
-                            };
-                            listUploadKPIVMs.Add(dataUploadKPIVM);
-                        }
-                    }
-                    //Tìm ID theo KPILevelCode trong bản KPILevel
-                    var listKPILevel = listUpdate.Select(x => x.KPILevelCode).Distinct().ToArray();
-                    var listKPILevelID = _dbContext.KPILevels.Where(a => listKPILevel.Contains(a.KPILevelCode)).Select(a => a.ID).ToArray();
-
-                    #region *) Lưu vào bảng thông báo
-                    var notify = new Notification();
-                    notify.Content = "You have just uploaded some KPIs.";
-                    notify.Action = "Upload";
-                    notify.TaskName = "Upload KPI Data";
-                    notify.UserID = userId;
-                    notify.Link = URL + "/Home/ListSubNotificationDetail/";
-                    _dbContext.Notifications.Add(notify);
-                    await _dbContext.SaveChangesAsync();
-                    #endregion
-                    #region *) Thông báo với các manager, owner, sponsor, updater khi upload xong
-                    var listManager = (await _dbContext.Managers.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
-                    var listOwner = (await _dbContext.Owners.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
-                    var listSponsor = (await _dbContext.Sponsors.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
-                    var listUpdater = (await _dbContext.Uploaders.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
-                    var listAll = listManager.Union(listOwner).Union(listOwner).Union(listSponsor).Union(listUpdater);
-                    #endregion
-                    #region *) Thêm vào bảng chi tiết thông báo
-                    var listUrls = await ListURLToChartPriodAsync(listUpdate);
-                    await CreateNotificationDetails(listUrls, listAll, notify.ID);
-                    #endregion
-                }
-
-                #endregion
-                if (listUploadKPIVMs.Count > 0 || listDataSuccess.Count > 0)
-                {
-                    return new ImportDataViewModel
-                    {
-                        ListUploadKPIVMs = listUploadKPIVMs,
-                        ListDataSuccess = listDataSuccess,
-                        ListSendMail = listSendMail,
-                        Status = true,
-                    };
-                }
-                else
-                {
-                    return new ImportDataViewModel
-                    {
-                        ListUploadKPIVMs = listUploadKPIVMs,
-                        ListSendMail = listSendMail,
-                        Status = true,
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                var message = ex.Message;
-                return new ImportDataViewModel
-                {
-                    ListUploadKPIVMs = listUploadKPIVMs,
-                    Status = false,
-                };
-            }
-        }
         public async Task<bool> IsUpdater(int id)
         {
-            if (await _dbContext.Uploaders.FindAsync(id) == null)
+            if (await _dbContext.Uploaders.FirstOrDefaultAsync(x => x.UserID == id) == null)
                 return false;
             return true;
         }
@@ -2061,6 +1577,561 @@ namespace Service.Implementation
                 page,
                 pageSize
             };
+        }
+
+
+        #region *) Helper của hàm ImportData
+
+        /// <summary>
+        /// Kiểm tra tồn tại Data
+        /// </summary>
+        /// <param name="kpilevelcode"></param>
+        /// <param name="period"></param>
+        /// <param name="periodValue"></param>
+        /// <param name="year"></param>
+        /// <returns></returns>
+        public Data IsExistKPILevelData(string kpilevelcode, string period, int periodValue, int year)
+        {
+            switch (period.ToSafetyString().ToUpper())
+            {
+                case "W":
+                    return _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period && x.Week == periodValue && x.Yearly == year);
+                case "M":
+                    return _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period && x.Month == periodValue && x.Yearly == year);
+                case "Q":
+                    return _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period && x.Quarter == periodValue && x.Yearly == year);
+                case "Y":
+                    return _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period && x.Year == periodValue && x.Yearly == year);
+
+                default:
+                    return null;
+            }
+        }
+        /// <summary>
+        /// Hàm này dùng để lọc dữ liệu "Tạo mới" hay là "Cập nhật" đọc từ file Excel.
+        /// </summary>
+        /// <param name="entity">Danh sách đọc từ excel</param>
+        /// <returns>Trả về 2 danh sách "Tạo mới" và "Cập nhật" đọc từ file Excel</returns>
+        public Tuple<List<Data>, List<Data>> CreateOrUpdateData(List<UploadDataViewModel> entity)
+        {
+            List<Data> listCreateData = new List<Data>();
+            List<Data> listUpdateData = new List<Data>();
+            List<UploadDataViewModel> list = new List<UploadDataViewModel>();
+            foreach (var item in entity)
+            {
+                var value = item.KPILevelCode;
+                var kpilevelcode = value.Substring(0, value.Length - 1);
+                var period = value.Substring(value.Length - 1, 1);
+                var year = item.Year; //dữ liệu trong năm vd: năm 2019
+                var valuePeriod = item.Value;
+                var target = item.TargetValue;
+                //query trong bảng data nếu updated thì update lại db
+                var isExistData = IsExistKPILevelData(kpilevelcode, period, item.PeriodValue, year);
+                switch (period)
+                {
+                    case "W":
+                        var dataW = new Data();
+                        dataW.KPILevelCode = kpilevelcode;
+                        dataW.Value = item.Value;
+                        dataW.Week = item.PeriodValue;
+                        dataW.Yearly = year;
+                        dataW.CreateTime = item.CreateTime;
+                        dataW.Period = period;
+                        if (item.TargetValue.ToDouble() > 0)
+                            dataW.Target = item.TargetValue.ToString();
+                        else dataW.Target = "0";
+                        if (isExistData == null)
+                            listCreateData.Add(dataW);
+                        else if (isExistData != null)
+                        {
+                            if (dataW.Value != valuePeriod || dataW.Target != target)
+                            {
+                                dataW.ID = isExistData.ID;
+                                listUpdateData.Add(dataW);
+                            }
+                        }
+                        else
+                            list.Add(item);
+                        break;
+                    case "M":
+                        var dataM = new Data();
+                        dataM.KPILevelCode = kpilevelcode;
+                        dataM.Value = item.Value;
+                        dataM.Month = item.PeriodValue;
+                        dataM.Yearly = year;
+                        dataM.CreateTime = item.CreateTime;
+                        dataM.Period = period;
+
+                        if (item.TargetValue.ToDouble() > 0)
+                            dataM.Target = item.TargetValue.ToString();
+                        else dataM.Target = "0";
+                        if (isExistData == null)
+                            listCreateData.Add(dataM);
+                        else if (isExistData != null)
+                        {
+                            if (isExistData.Value != valuePeriod || isExistData.Target != target)
+                            {
+                                dataM.ID = isExistData.ID;
+                                listUpdateData.Add(dataM);
+                            }
+                        }
+                        else
+                            list.Add(item);
+                        break;
+                    case "Q":
+                        var dataQ = new Data();
+                        dataQ.KPILevelCode = kpilevelcode;
+                        dataQ.Value = item.Value;
+                        dataQ.Quarter = item.PeriodValue;
+                        dataQ.Yearly = year;
+                        dataQ.CreateTime = item.CreateTime;
+                        dataQ.Period = period;
+
+                        if (item.TargetValue.ToDouble() > 0)
+                            dataQ.Target = item.TargetValue.ToString();
+                        else dataQ.Target = "0";
+                        if (isExistData == null)
+                            listCreateData.Add(dataQ);
+                        else if (isExistData != null)
+                        {
+                            if (isExistData.Value != valuePeriod || isExistData.Target != target)
+                            {
+                                dataQ.ID = isExistData.ID;
+                                listUpdateData.Add(dataQ);
+                            }
+                        }
+                        else
+                            list.Add(item);
+                        break;
+                    case "Y":
+                        var dataY = new Data();
+                        dataY.KPILevelCode = kpilevelcode;
+                        dataY.Value = item.Value;
+                        dataY.Year = item.PeriodValue;
+                        dataY.Yearly = year;
+                        dataY.CreateTime = item.CreateTime;
+                        dataY.Period = period;
+
+                        if (item.TargetValue.ToDouble() > 0)
+                            dataY.Target = item.TargetValue.ToString();
+                        else dataY.Target = "0";
+                        if (isExistData == null)
+                            listCreateData.Add(dataY);
+                        else if (isExistData != null)
+                        {
+                            if (isExistData.Value != valuePeriod || isExistData.Target != target)
+                            {
+                                dataY.ID = isExistData.ID;
+                                listUpdateData.Add(dataY);
+                            }
+                        }
+                        else
+                            list.Add(item);
+                        break;
+                    default:
+
+                        break;
+                }
+            }
+
+            return Tuple.Create(listCreateData, listUpdateData);
+        }
+        public async Task<bool> IsExistsTag(int userId, int notifyId)
+        {
+            return await _dbContext.Tags.AnyAsync(x => x.UserID == userId && x.NotificationID == notifyId);
+        }
+        /// <summary>
+        /// Hàm này dùng để tìm CÁC category của mỗi kpilevelcode
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        private async Task<List<int>> GetAllCategoryByKPILevel(string code)
+        {
+            var item = await _dbContext.KPILevels.FirstOrDefaultAsync(x => x.KPILevelCode == code && x.Checked == true);
+            var kpilevelID = item.ID;
+            var listCategory = await _dbContext.CategoryKPILevels.Where(x => x.KPILevelID == kpilevelID && x.Status == true).Select(x => x.CategoryID).ToListAsync();
+            return listCategory;
+        }
+
+        public async Task<string> GetKPIName(string code)
+        {
+            var item = await _dbContext.KPILevels.FirstOrDefaultAsync(x => x.KPILevelCode == code && x.Checked == true);
+            var kpilevelID = item.KPIID;
+            var listCategory = await _dbContext.KPIs.Where(x => x.ID == kpilevelID).FirstOrDefaultAsync();
+            return listCategory.Name;
+        }
+
+        /// <summary>
+        /// Hàm này dùng để tạo url chuyển tới trang ChartPriod của từng data khi update hoặc create
+        /// </summary>
+        /// <param name="datas"></param>
+        /// <returns></returns>
+        private async Task<List<string[]>> ListURLToChartPriodAsync(List<Data> datas)
+        {
+            var listURLToChartPeriod = new List<string[]>();
+            string http = _configuration.GetSection("AppSettings:URL").Value.ToSafetyString();
+            string url = string.Empty;
+            foreach (var item in datas.DistinctBy(x => x.KPILevelCode))
+            {
+                var oc = _levelService.GetNode(item.KPILevelCode);
+                var kpiname = await GetKPIName(item.KPILevelCode);
+                var listCategories = await GetAllCategoryByKPILevel(item.KPILevelCode);
+                if (item.Period == "W")
+                {
+
+                    foreach (var cat in listCategories)
+                    {
+                        url = http + $"/ChartPeriod/?kpilevelcode={item.KPILevelCode}&catid={cat}&period={item.Period}&year={DateTime.Now.Year}&start=1&end=53";
+                        listURLToChartPeriod.Add(new string[3]
+                                           {
+                                url,kpiname,oc
+                                           });
+                    }
+
+                }
+                if (item.Period == "M")
+                {
+                    foreach (var cat in listCategories)
+                    {
+                        url = http + $"/ChartPeriod/?kpilevelcode={item.KPILevelCode}&catid={cat}&period={item.Period}&year={DateTime.Now.Year}&start=1&end=12";
+                        listURLToChartPeriod.Add(new string[3]
+                        {
+                                url,kpiname,oc
+                        });
+                    }
+                }
+                if (item.Period == "Q")
+                {
+                    foreach (var cat in listCategories)
+                    {
+                        url = http + $"/ChartPeriod/?kpilevelcode={item.KPILevelCode}&catid={cat}&period={item.Period}&year={DateTime.Now.Year}&start=1&end=4";
+                        listURLToChartPeriod.Add(new string[3]
+                        {
+                                url,kpiname,oc
+                        });
+                    }
+                }
+                if (item.Period == "Y")
+                {
+                    foreach (var cat in listCategories)
+                    {
+                        url = http + $"/ChartPeriod/?kpilevelcode={item.KPILevelCode}&catid={cat}&period={item.Period}&year={DateTime.Now.Year}&start={DateTime.Now.Year}&end={DateTime.Now.Year}";
+                        listURLToChartPeriod.Add(new string[3]
+                        {
+                                    url,kpiname,oc
+                        });
+                    }
+                }
+            }
+            return listURLToChartPeriod;
+
+        }
+        /// <summary>
+        /// Hàm này dùng để xem chi tiết cụ thể của thông báo
+        /// </summary>
+        /// <param name="datas"></param>
+        /// <param name="users"></param>
+        /// <param name="notificationId"></param>
+        /// <returns></returns>
+        public async Task CreateListTagAndNotificationDetail(List<string[]> datas, IEnumerable<int> users, int notificationId)
+        {
+            var listNotification = new List<NotificationDetail>();
+            foreach (var item in users)
+            {
+                foreach (var item2 in datas)
+                {
+                    listNotification.Add(new NotificationDetail
+                    {
+                        Content = item2[1] + " ( " + item2[2] + " ) ",
+                        URL = item2[0].ToSafetyString(),
+                        NotificationID = notificationId,
+                        UserID = item,
+                        CreateTime = DateTime.Now
+                    });
+                }
+            }
+
+          await _dbContext.NotificationDetails.AddRangeAsync(listNotification);
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+        /// <summary>
+        /// Tạo thông báo
+        /// </summary>
+        /// <param name="notification"></param>
+        /// <returns></returns>
+        public async Task<int> CreateNotification(Notification notification)
+        {
+            _dbContext.Notifications.Add(notification);
+            await _dbContext.SaveChangesAsync();
+            return notification.ID;
+        }
+        /// <summary>
+        /// Tạo list PIC để thông báo gửi mail
+        /// </summary>
+        /// <param name="listKPILevelID"></param>
+        /// <returns></returns>
+        public async Task<List<int>> CreateListPIC(List<int> listKPILevelID)
+        {
+            #region *) Thông báo với các manager, owner, sponsor, updater khi upload xong
+            var listManager = (await _dbContext.Managers.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
+            var listOwner = (await _dbContext.Owners.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
+            var listSponsor = (await _dbContext.Sponsors.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
+            var listUpdater = (await _dbContext.Uploaders.Where(x => listKPILevelID.Contains(x.KPILevelID)).ToListAsync()).DistinctBy(x => x.KPILevelID).Select(x => x.UserID).ToList();
+            var listAll = listManager.Union(listOwner).Union(listOwner).Union(listSponsor).Union(listUpdater);
+            #endregion
+            return listManager.Union(listOwner).Union(listOwner).Union(listSponsor).Union(listUpdater).ToList();
+        }
+        #endregion
+
+        public async Task<ImportDataViewModel> ImportData(List<UploadDataViewModel> entity, string userUpdate, int userid)
+        {
+            #region *) Biến toàn cục
+            string http = _configuration.GetSection("AppSettings:URL").Value.ToSafetyString();
+
+            var listAdd = new List<Data>();
+            var listTag = new List<Tag>();
+            var listSendMail = new List<string>();
+            var listUploadKPIViewModels = new List<UploadKPIViewModel>();
+            var listDataSuccess = new List<UploadKPIViewModel>();
+
+
+            var dataModel = _dbContext.Datas;
+            var kpiLevelModel = _dbContext.KPILevels;
+            var kpiModel = _dbContext.KPIs;
+            var levelModel = _dbContext.Levels;
+            #endregion
+
+            #region *) Lọc dữ liệu làm 2 loại là tạo mới và cập nhật
+            var tuple = CreateOrUpdateData(entity);
+            var listCreate = tuple.Item1;
+            var listUpdate = tuple.Item2;
+            #endregion
+
+            try
+            {
+                #region *) Tạo mới
+                if (listCreate.Count() > 0)
+                {
+                    _dbContext.Datas.AddRange(listCreate);
+                    await _dbContext.SaveChangesAsync();
+                    //Gui mail list nay khi update
+                    //Tạo mới xong rồi thì thêm vào list gửi mail 
+                    foreach (var item in listCreate)
+                    {
+                        var tblKPILevelByKPILevelCode = await kpiLevelModel.FirstOrDefaultAsync(x => x.KPILevelCode == item.KPILevelCode);
+                        #region *) Upload thành công thì sẽ gửi mail thông báo
+                        if (item.Value.ToDouble() > 0)
+                        {
+                            var dataSuccess = new UploadKPIViewModel()
+                            {
+                                KPILevelCode = item.KPILevelCode,
+                                Area = levelModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.LevelID).Name,
+                                KPIName = kpiModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.KPIID).Name,
+                                Week = item.Week,
+                                Month = item.Month,
+                                Quarter = item.Quarter,
+                                Year = item.Year
+                            };
+                            listDataSuccess.Add(dataSuccess);
+                        }
+                        #endregion
+
+                        #region *) Dưới target thì sẽ gửi mail thông báo
+                        if (item.Value.ToDouble() < item.Target.ToDouble())
+                        {
+                            var dataUploadKPIViewModel = new UploadKPIViewModel()
+                            {
+                                KPILevelCode = item.KPILevelCode,
+                                Area = levelModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.LevelID).Name,
+                                KPIName = kpiModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.KPIID).Name,
+                                Week = item.Week,
+                                Month = item.Month,
+                                Quarter = item.Quarter,
+                                Year = item.Year
+                            };
+                            listUploadKPIViewModels.Add(dataUploadKPIViewModel);
+                        }
+                        #endregion
+
+                    }
+                    //Tìm ID theo KPILevelCode trong bản KPILevel
+                    var listKPILevel = listCreate.Select(x => x.KPILevelCode).Distinct().ToArray();
+                    var listKPILevelID = _dbContext.KPILevels.Where(a => listKPILevel.Contains(a.KPILevelCode)).Select(a => a.ID).ToList();
+
+                    #region *) Lưu vào bảng thông báo
+                    var notifyId = await CreateNotification(new Notification
+                    {
+                        Content = "You have just uploaded some KPIs.",
+                        Action = "Upload",
+                        TaskName = "Upload KPI Data",
+                        UserID = userid,
+                        Link = http + "/Home/ListSubNotificationDetail/"
+                    });
+
+                    #endregion
+
+                    #region *) Thông báo với các manager, owner, sponsor, updater khi upload xong
+                    var listAll = await CreateListPIC(listKPILevelID);
+                    #endregion
+
+                    #region *) Tạo danh sách gửi mail
+                    listSendMail = _dbContext.Users.Where(x => listAll.Contains(x.ID)).Select(x => x.Email).ToList();
+                    #endregion
+
+                    #region *) Thêm vào bảng chi tiết thông báo
+                    var listUrls = await ListURLToChartPriodAsync(listCreate);
+                    await CreateListTagAndNotificationDetail(listUrls, listAll, notifyId);
+                    #endregion
+                }
+                #endregion
+
+                #region *) Cập nhật
+                if (listUpdate.Count() > 0)
+                {
+                    foreach (var item in listUpdate)
+                    {
+                        switch (item.Period)
+                        {
+                            case "W":
+                                var dataW = await dataModel.FirstOrDefaultAsync(x => x.KPILevelCode == item.KPILevelCode && x.Period == item.Period && x.Week == item.Week && x.Yearly == item.Yearly);
+                                dataW.Value = item.Value;
+                                dataW.Target = item.Target;
+                                _dbContext.SaveChanges();
+                                break;
+                            case "M":
+                                var dataM = await dataModel.FirstOrDefaultAsync(x => x.KPILevelCode == item.KPILevelCode && x.Period == item.Period && x.Month == item.Month && x.Yearly == item.Yearly);
+                                dataM.Value = item.Value;
+                                dataM.Target = item.Target;
+                                _dbContext.SaveChanges();
+                                break;
+                            case "Q":
+
+                                var dataQ = await dataModel.FirstOrDefaultAsync(x => x.KPILevelCode == item.KPILevelCode && x.Period == item.Period && x.Quarter == item.Quarter && x.Yearly == item.Yearly);
+                                dataQ.Value = item.Value;
+                                dataQ.Target = item.Target;
+                                _dbContext.SaveChanges();
+                                break;
+                            case "Y":
+                                var dataY = await dataModel.FirstOrDefaultAsync(x => x.KPILevelCode == item.KPILevelCode && x.Period == item.Period && x.Year == item.Year && x.Yearly == item.Yearly);
+                                dataY.Value = item.Value;
+                                dataY.Target = item.Target;
+                                _dbContext.SaveChanges();
+                                break;
+                            default:
+                                break;
+                        }
+                        var tblKPILevelByKPILevelCode = await kpiLevelModel.FirstOrDefaultAsync(x => x.KPILevelCode == item.KPILevelCode);
+                        #region *)
+                        if (item.Value.ToDouble() > 0)
+                        {
+                            var dataSuccess = new UploadKPIViewModel()
+                            {
+                                KPILevelCode = item.KPILevelCode,
+                                Area = levelModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.LevelID).Name,
+                                KPIName = kpiModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.KPIID).Name,
+                                Week = item.Week,
+                                Month = item.Month,
+                                Quarter = item.Quarter,
+                                Year = item.Year
+                            };
+                            listDataSuccess.Add(dataSuccess);
+                        }
+                        #endregion
+
+                        #region *) Nếu dữ liệu mà nhỏ hơn mục tiêu thì sẽ gửi mail
+                        if (item.Value.ToDouble() < item.Target.ToDouble())
+                        {
+                            var dataUploadKPIViewModel = new UploadKPIViewModel()
+                            {
+                                KPILevelCode = item.KPILevelCode,
+                                Area = levelModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.LevelID).Name,
+                                KPIName = kpiModel.FirstOrDefault(x => x.ID == tblKPILevelByKPILevelCode.KPIID).Name,
+                                Week = item.Week,
+                                Month = item.Month,
+                                Quarter = item.Quarter,
+                                Year = item.Year
+                            };
+                            listUploadKPIViewModels.Add(dataUploadKPIViewModel);
+                        }
+                        #endregion
+                    }
+                    //Tìm ID theo KPILevelCode trong bản KPILevel
+                    var listKPILevel = listUpdate.Select(x => x.KPILevelCode).Distinct().ToArray();
+                    var listKPILevelID = _dbContext.KPILevels.Where(a => listKPILevel.Contains(a.KPILevelCode)).Select(a => a.ID).ToList();
+
+                    #region *) Lưu vào bảng thông báo
+                    var notifyId = await CreateNotification(new Notification
+                    {
+                        Content = "You have just uploaded some KPIs.",
+                        Action = "Upload",
+                        TaskName = "Upload KPI Data",
+                        UserID = userid,
+                        Link = http + "/Home/ListSubNotificationDetail/"
+                    });
+
+                    #endregion
+
+                    #region *) Thông báo với các manager, owner, sponsor, updater khi upload xong
+                    var listAll = await CreateListPIC(listKPILevelID);
+                    #endregion
+                    #region Tạo danh sách gửi mail
+                    listSendMail = _dbContext.Users.Where(x => listAll.Contains(x.ID)).Select(x => x.Email).ToList();
+                    #endregion
+
+                    #region *) Thêm vào bảng chi tiết thông báo
+                    var listUrls = await ListURLToChartPriodAsync(listUpdate);
+                    await CreateListTagAndNotificationDetail(listUrls, listAll, notifyId);
+                    #endregion
+                }
+
+                #endregion
+                return new ImportDataViewModel
+                {
+                    ListDatasBelowTarget = listUploadKPIViewModels,
+                    ListDatasSuccess = listDataSuccess,
+                    ListSendMail = listSendMail,
+                    Status = true,
+                };
+            }
+            catch (Exception ex)
+            {
+                var message = ex.Message;
+                return new ImportDataViewModel
+                {
+                    ListDatasBelowTarget = listUploadKPIViewModels,
+                    ListDatasSuccess = listDataSuccess,
+                    ListSendMail = listSendMail,
+                    Status = false,
+                };
+            }
+        }
+
+
+
+        private bool disposed = false;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    _dbContext.Dispose();
+                }
+            }
+            this.disposed = true;
+        }
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

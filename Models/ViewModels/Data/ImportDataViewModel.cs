@@ -8,8 +8,8 @@ namespace Models.ViewModels.Data
     {
 
 
-        public List<UploadKPIViewModel> ListUploadKPIVMs { get; set; }
-        public List<UploadKPIViewModel> ListDataSuccess { get; set; }
+        public List<UploadKPIViewModel> ListDatasBelowTarget { get; set; }
+        public List<UploadKPIViewModel> ListDatasSuccess { get; set; }
         public bool Status { get; set; }
         public List<string> ListSendMail { get; set; }
 

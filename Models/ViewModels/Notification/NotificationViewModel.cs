@@ -7,6 +7,9 @@ namespace Models.ViewModels.Notification
   public  class NotificationViewModel
     {
         public int ID { get; set; }
+        public int NotificationID { get; set; }
+        public string ContentDetail { get; set; }
+        public string URL { get; set; }
         public string Link { get; set; }
         public string Period { get; set; }
         public string KPIName { get; set; }

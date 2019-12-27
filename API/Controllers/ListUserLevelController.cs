@@ -5,9 +5,11 @@ using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
 using System.Threading.Tasks;
 using API.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("[controller]/[action]")]
     public class ListUserLevelController : ControllerBase

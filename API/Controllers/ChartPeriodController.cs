@@ -1,5 +1,4 @@
-﻿
-using Models.EF;
+﻿using Models.EF;
 using Models.ViewModels.Comment;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
@@ -7,14 +6,16 @@ using System.Threading.Tasks;
 using API.Helpers;
 using System.Linq;
 using Service.Helpers;
-using API.SignalR;
 using System.Collections.Generic;
 using Models.ViewModels.ActionPlan;
 using Microsoft.Extensions.Configuration;
-
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
+using API.SignalR;
 
 namespace API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("[controller]/[action]")]
     public class ChartPeriodController : ControllerBase
@@ -27,6 +28,7 @@ namespace API.Controllers
         private readonly IKPILevelService _kPILevelService;
         private readonly IFavouriteService _favouriteService;
         private readonly IConfiguration _configuaration;
+        private readonly IHubContext<HenryHub> _hubContext;
         private readonly INotificationService _notificationService;
 
         // GET: Month
@@ -39,6 +41,7 @@ namespace API.Controllers
             IKPILevelService kPILevelService,
             IFavouriteService favouriteService,
             IConfiguration configuaration,
+            IHubContext<HenryHub> hubContext,
             INotificationService notificationService)
         {
             _dataService = dataService;
@@ -49,6 +52,7 @@ namespace API.Controllers
             _kPILevelService = kPILevelService;
             _favouriteService = favouriteService;
             _configuaration = configuaration;
+            _hubContext = hubContext;
             _notificationService = notificationService;
         }
         [HttpGet("{kpilevelcode}/{catid}/{period}/{year}/{start}/{end}")]
@@ -68,7 +72,8 @@ namespace API.Controllers
 
             var data = await _commentService.AddComment(entity, levelNumberOfUserComment);
             var tos = new List<string>();
-            //HenryHub.SendNotifications();
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
+
             if (data.ListEmails.Count > 0 && await _settingService.IsSendMail("ADDCOMMENT"))
             {
                 var model = data.ListEmails.DistinctBy(x => x);
@@ -121,7 +126,9 @@ namespace API.Controllers
             var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
             obj.OwnerID = userID;
             var data = await _actionPlanService.Add(obj);//(item, obj.Subject, obj.Auditor, obj.CategoryID);
-            //NotificationHub.SendNotifications();
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
+
+
             if (data.ListEmails.Count > 0 && await _settingService.IsSendMail("ADDTASK"))
             {
                 string content = "The account " + data.ListEmails.First()[0] + " mentioned you in KPI System Apps. Content: " + data.ListEmails.First()[4] + ". " + data.ListEmails.First()[3] + " Link: " + data.ListEmails.First()[2];
@@ -150,7 +157,9 @@ namespace API.Controllers
         public async Task<IActionResult> Approval([FromBody]int id, int approveby, string KPILevelCode, int CategoryID)
         {
             var model = await _actionPlanService.Approve(id, approveby, KPILevelCode, CategoryID);
-            //NotificationHub.SendNotifications();
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
+
+
             if (model.Item1.Count > 0 && await _settingService.IsSendMail("APPROVAL"))
             {
                 string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
@@ -169,7 +178,9 @@ namespace API.Controllers
             var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
 
             var model = await _actionPlanService.Done(id, userID, KPILevelCode, CategoryID);
-            //NotificationHub.SendNotifications();
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
+
+
             if (model.Item1.Count > 0 && await _settingService.IsSendMail("DONE"))
             {
                 string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
@@ -185,7 +196,8 @@ namespace API.Controllers
         public async Task<IActionResult> AddNotification([FromBody]Notification notification)
         {
             var status = await _notificationService.Add(notification);
-            //NotificationHub.SendNotifications();
+            await _hubContext.Clients.All.SendAsync("SendMessage");
+
             return Ok(status);
         }
         [HttpPost]

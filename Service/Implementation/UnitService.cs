@@ -46,9 +46,9 @@ namespace Service.Implementation
                 await _dbContext.SaveChangesAsync();
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
-                var message = ex.Message;
+              
                 return false;
             }
         }

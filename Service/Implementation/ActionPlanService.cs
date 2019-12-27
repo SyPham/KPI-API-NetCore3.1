@@ -56,18 +56,21 @@ namespace Service.Implementation
                 };
             else
             {
-                var entity = new ActionPlan();
-                entity.Title = obj.Title;
-                entity.Description = obj.Description;
-                entity.KPILevelCodeAndPeriod = obj.KPILevelCodeAndPeriod;
-                entity.KPILevelCode = obj.KPILevelCode;
-                entity.Tag = obj.Tag;
-                entity.UserID = obj.UserID;
-                entity.DataID = obj.DataID;
-                entity.CommentID = obj.CommentID;
-                entity.Link = obj.Link;
-                entity.SubmitDate = obj.SubmitDate.ToDateTime();
-                entity.Deadline = obj.Deadline.ToDateTime();
+                var entity = new ActionPlan()
+                {
+                    Title = obj.Title,
+                    Description = obj.Description,
+                    KPILevelCodeAndPeriod = obj.KPILevelCodeAndPeriod,
+                    KPILevelCode = obj.KPILevelCode,
+                    Tag = obj.Tag,
+                    UserID = obj.UserID,
+                    DataID = obj.DataID,
+                    CommentID = obj.CommentID,
+                    Link = obj.Link,
+                    SubmitDate = obj.SubmitDate.ToDateTime(),
+                    Deadline = obj.Deadline.ToDateTime(),
+                };
+               
 
                 var user = _dbContext.Users;
                 var itemActionPlanDetail = new ActionPlanDetail();
@@ -279,7 +282,6 @@ namespace Service.Implementation
         public async Task<object> GetAll(int DataID, int CommentID, int userid)
         {
             var userModel = await _dbContext.Users.FirstOrDefaultAsync(x => x.ID == userid);
-            var permission = _dbContext.Permissions;
             var data = await _dbContext.ActionPlans
                 .Where(x => x.DataID == DataID && x.CommentID == CommentID)
                 .Select(x => new
@@ -294,7 +296,7 @@ namespace Service.Implementation
                     x.ActualFinishDate,
                     x.Status,
                     x.UserID,
-                    IsBoss = (int?)permission.FirstOrDefault(a => a.ID == userModel.Permission).ID < 3 ? true : false,
+                    IsBoss = (int?)_dbContext.Roles.FirstOrDefault(a => a.ID == userModel.Role).ID < 2 ? true : false,
                     CreatedBy = x.UserID,
                     x.Auditor
                 })

@@ -4,6 +4,9 @@ using Service.Interface;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using API.Helpers;
+using System.Linq;
+using Service.Helpers;
+using Newtonsoft.Json;
 
 namespace API.Controllers
 {
@@ -60,12 +63,13 @@ namespace API.Controllers
             return Ok(await _menuService.GetAllPaging(keyword, page, pageSize));
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetPermissions()
+        [HttpGet("{langBy}")]
+        public IActionResult ChangeLocale(string langBy)
         {
-            return Ok(await _menuService.GetPermissions());
+            string token = Request.Headers["Authorization"];
+            var role = Extensions.DecodeToken(token).FirstOrDefault(x => x.Type == "Role").Value.ToInt();
+            return Ok(role);
 
         }
-
     }
 }

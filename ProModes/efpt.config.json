@@ -1,0 +1,150 @@
+﻿{
+   "ContextClassName": "DataContext",
+   "ContextNamespace": null,
+   "DefaultDacpacSchema": null,
+   "DoNotCombineNamespace": false,
+   "IdReplace": false,
+   "IncludeConnectionString": false,
+   "ModelNamespace": null,
+   "OutputContextPath": null,
+   "OutputPath": null,
+   "ProjectRootNamespace": "ProModes",
+   "SelectedHandlebarsLanguage": 0,
+   "SelectedToBeGenerated": 0,
+   "Tables": [
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[ActionPlanDetails]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[ActionPlans]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Categories]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[CategoryKPILevels]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Comments]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Data]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[ErrorMessages]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Favourites]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[KPILevels]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[KPIs]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Levels]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Managers]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[MenuLangs]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Menus]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[NotificationDetails]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Notifications]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[OCCategories]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Owners]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Participants]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Permissions]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Resources]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Revises]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Roles]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[SeenComments]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Settings]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Sponsors]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[StateSendMails]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[SubNotifications]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Tags]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Units]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Uploaders]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[Users]"
+      }
+   ],
+   "UseDatabaseNames": false,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseInflector": false,
+   "UseLegacyPluralizer": false,
+   "UseSpatial": false
+}

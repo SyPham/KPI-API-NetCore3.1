@@ -66,11 +66,11 @@ namespace API.Controllers
                 User = new UserForReturnLogin
                 {
                     Username = user.Username,
-                    Permission = user.Permission,
+                    Role = user.Role,
                     ID = user.ID,
                     Alias = user.Alias
                 },
-                Menus = JsonConvert.SerializeObject(await _authService.GetMenusAsync(user.Permission))
+                Menus = JsonConvert.SerializeObject(await _authService.GetMenusAsync(user.Role))
             };
             return Ok(new
             {

@@ -13,10 +13,12 @@ namespace API.Controllers
     public class AdminKPIController : ControllerBase
     {
         private readonly IKPIService _KPIService;
+        private readonly IUnitService _unitService;
 
-        public AdminKPIController(IKPIService KPIService)
+        public AdminKPIController(IKPIService KPIService, IUnitService unitService)
         {
             _KPIService = KPIService;
+            _unitService = unitService;
         }
         /// <summary>
         /// Thêm KPI
@@ -62,19 +64,21 @@ namespace API.Controllers
         /// <param name="pageSize">Số dòng trên 1 trang</param>
         /// <returns>Trả về danh sách dữ liệu đã được phân trang</returns>
         /// 
-        [HttpGet("{catID}")]
-        [HttpGet("{catID}/{name}")]
+        [HttpGet("{page}/{pageSize}")]
         [HttpGet("{name}/{page}/{pageSize}")]
-        [HttpGet("{catID}/{page}/{pageSize}")]
-        [HttpGet("{catID}/{name}/{page}/{pageSize}")]
-        public async Task<IActionResult> LoadData(int? catID, string name = "", int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
+        public async Task<IActionResult> LoadData(string name = "", int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
-            return Ok(await _KPIService.GetAllPaging(catID, name, page, pageSize));
+            return Ok(await _KPIService.LoadData(name, page, pageSize));
         }
         [HttpGet("{name}")]
         public async Task<IActionResult> Autocomplete(string name)
         {
             return Ok(await _KPIService.Autocomplete(name));
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAllUnit()
+        {
+            return Ok(await _unitService.GetAll());
         }
     }
 }

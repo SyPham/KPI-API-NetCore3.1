@@ -107,9 +107,56 @@ namespace Service.Implementation
             throw new NotImplementedException();
         }
 
-        public Task<List<NotificationViewModel>> ListNotifications(int userid)
+        public async Task<List<NotificationViewModel>> ListNotifications(int userid)
         {
-            throw new NotImplementedException();
+            var kpilevel = _dbContext.KPILevels;
+            var kpilevel2 = _dbContext.Notifications.ToList();
+            var model = (await (from notify in _dbContext.Notifications
+                                join notifyDetail in _dbContext.NotificationDetails.Where(x => x.UserID == userid) on notify.ID equals notifyDetail.NotificationID
+                                select new
+                                {
+                                    NotificationID = notify.ID,
+                                    notifyDetail.ID,
+                                    notify.Title,
+                                    notify.KPIName,
+                                    notify.Period,
+                                    ContentDetail = notifyDetail.Content,
+                                    notifyDetail.URL,
+                                    notifyDetail.CreateTime,
+                                    notify.Link,
+                                    notifyDetail.Seen,
+                                    notify.Tag,
+                                    notify.Content,
+                                    notify.KPILevelCode,
+                                    notify.Action,
+                                    SenderID = notify.UserID,
+                                    RecipientID = notifyDetail.UserID,
+                                    notify.TaskName
+                                }).ToListAsync())
+           .OrderByDescending(x => x.CreateTime)
+           .Select(x => new NotificationViewModel
+           {
+               ID = x.ID,
+               NotificationID = x.NotificationID,
+               Title = x.Title,
+               KPIName = _dbContext.KPIs.FirstOrDefault(kpi => kpi.ID == kpilevel.FirstOrDefault(a => a.KPILevelCode == x.KPILevelCode).KPIID).Name,
+               Period = x.Period,
+               Sender = _dbContext.Users.FirstOrDefault(a => a.ID == x.SenderID)?.Alias,
+               Recipient = _dbContext.Users.FirstOrDefault(a => a.ID == x.RecipientID)?.Alias,
+               SenderID = x.SenderID,
+               RecipientID = x.RecipientID,
+               CreateTime = x.CreateTime,
+               Link = x.Link,
+               Seen = x.Seen,
+               Tag = x.Tag,
+               Action = x.Action,
+               TaskName = x.TaskName,
+               Content = x.Content.ToSafetyString(),
+               ContentDetail = x.ContentDetail,
+               URL = x.URL
+           }).ToList();
+
+            return model;
         }
 
         public Task<bool> Remove(int Id)

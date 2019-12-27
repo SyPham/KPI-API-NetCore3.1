@@ -13,6 +13,10 @@ namespace Service.Interface
    public interface ISettingService : IDisposable,ICommonService<Setting>
     {
         Task<bool> IsSendMail(string code);
+
+        Task<Setting> ShowInfo();
+        Task<Setting> Maintain();
+
     }
-    
+
 }

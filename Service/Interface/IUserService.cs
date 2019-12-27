@@ -11,9 +11,9 @@ namespace Service.Interface
         Task<object> LoadDataUser(int levelid, string code, int page, int pageSize);
         Task<bool> LockUser(int id);
         Task<bool> ChangePassword(string username, string newpass);
-        object GetAllMenusByPermissionID(int id);
         Task<bool> Checkpermisson(int userid);
-        Task<object> GetListAllPermissions(int userid);
+        Task<object> Sidebars(int role,int userid);
+
     }
-   
+
 }

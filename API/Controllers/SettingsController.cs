@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
 using System.Threading.Tasks;
 using API.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
@@ -57,6 +58,19 @@ namespace API.Controllers
         public async Task<IActionResult> GetAllPaging(string keyword, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _settingService.GetAllPaging(keyword, page, pageSize));
+        }
+        [AllowAnonymous]
+        [HttpGet]
+        public async Task<IActionResult> ShowInfo()
+        {
+            return Ok(await _settingService.ShowInfo());
+
+        }
+        [AllowAnonymous]
+        [HttpGet]
+        public async Task<IActionResult> Maintain()
+        {
+            return Ok(await _settingService.Maintain());
 
         }
     }

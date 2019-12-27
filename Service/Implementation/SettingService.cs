@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Service.Implementation
 {
@@ -19,10 +20,38 @@ namespace Service.Implementation
             _dbContext = dbContext;
         }
 
-        public Task<bool> Add(Setting entity)
+        public async Task<bool> Add(Setting entity)
         {
-            throw new NotImplementedException();
+
+            try
+            {
+                _dbContext.Settings.Add(entity);
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+
+                return false;
+            }
         }
+
+        public async Task<bool> Remove(int Id)
+        {
+            try
+            {
+                var setting = await GetById(Id);
+                _dbContext.Remove(setting);
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+
+                return false;
+            }
+        }
+
         private bool disposed = false;
         protected virtual void Dispose(bool disposing)
         {
@@ -42,34 +71,45 @@ namespace Service.Implementation
         }
 
 
-        public Task<List<Setting>> GetAll()
+        public async Task<List<Setting>> GetAll()
         {
-            throw new NotImplementedException();
+            return await _dbContext.Settings.ToListAsync();
         }
 
-        public Task<List<Setting>> GetAllById(int Id)
+        public async Task<List<Setting>> GetAllById(int Id)
         {
-            throw new NotImplementedException();
+            return await _dbContext.Settings.Where(x=> x.ID ==Id).ToListAsync();
         }
 
-        public Task<PagedList<Setting>> GetAllPaging(string keyword, int page, int pageSize)
+        public async Task<PagedList<Setting>> GetAllPaging(string keyword, int page, int pageSize)
         {
-            throw new NotImplementedException();
+            return PagedList<Setting>.Create(await GetAll(), page, pageSize);
         }
 
-        public Task<Setting> GetById(int Id)
+        public async Task<Setting> GetById(int Id)
         {
-            throw new NotImplementedException();
+            return await _dbContext.Settings.FirstOrDefaultAsync(x => x.ID == Id );
         }
 
-        public Task<bool> Remove(int Id)
+       
+        public async Task<bool> Update(Setting entity)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> Update(Setting entity)
-        {
-            throw new NotImplementedException();
+            try
+            {
+                var item = await GetById(entity.ID);
+                item.Name = entity.Name;
+                item.State = entity.State;
+                item.CreatedTime = entity.CreatedTime;
+                item.Code = entity.Code;
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                var message = ex.Message;
+                //logging
+                return false;
+            }
         }
         public async Task<bool> IsSendMail(string code)
         {
@@ -82,6 +122,17 @@ namespace Service.Implementation
             {
                 throw;
             }
+
+        }
+
+        public async Task<Setting> ShowInfo()
+        {
+            return await _dbContext.Settings.FirstOrDefaultAsync(x => x.State == true && x.Code == "INFO");
+        }
+
+        public async Task<Setting> Maintain()
+        {
+            return await _dbContext.Settings.FirstOrDefaultAsync(x => x.State == true && x.Code == "MAINTAIN");
 
         }
     }

@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Models.ViewModels.Menu;
 
 namespace Service.Implementation
 {
@@ -47,9 +48,9 @@ namespace Service.Implementation
                 await _dbContext.SaveChangesAsync();
                 return true;
             }
-            catch (Exception ex)
+            catch 
             {
-                var message = ex.Message;
+               
                 return false;
             }
         }
@@ -94,7 +95,6 @@ namespace Service.Implementation
                 var item = await _dbContext.Menus.FirstOrDefaultAsync(x => x.ID == entity.ID);
                 item.Name = entity.Name;
                 item.Link = entity.Link;
-                item.Permission = entity.Permission;
                 item.Position = entity.Position;
                 item.BackgroudColor = entity.BackgroudColor;
                 item.FontAwesome = entity.FontAwesome;
@@ -126,9 +126,8 @@ namespace Service.Implementation
             return await PagedList<Menu>.CreateAsync(source, page, pageSize);
         }
 
-        public async Task<List<Permission>> GetPermissions()
-        {
-            return await _dbContext.Permissions.ToListAsync();
-        }
+        
+
+      
     }
 }

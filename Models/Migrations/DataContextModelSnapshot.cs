@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Models;
 using Models.Data;
 
 namespace Models.Migrations
@@ -515,6 +514,9 @@ namespace Models.Migrations
                     b.Property<string>("BackgroudColor")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Code")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("FontAwesome")
                         .HasColumnType("nvarchar(max)");
 
@@ -523,12 +525,6 @@ namespace Models.Migrations
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ParentID")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Permission")
-                        .HasColumnType("int");
 
                     b.Property<int>("Position")
                         .HasColumnType("int");
@@ -562,6 +558,24 @@ namespace Models.Migrations
                     b.HasIndex("MenuID");
 
                     b.ToTable("MenuLangs");
+                });
+
+            modelBuilder.Entity("Models.EF.MenuRole", b =>
+                {
+                    b.Property<int>("RoleID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MenuID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Index")
+                        .HasColumnType("int");
+
+                    b.HasKey("RoleID", "MenuID");
+
+                    b.HasIndex("MenuID");
+
+                    b.ToTable("MenuRoles");
                 });
 
             modelBuilder.Entity("Models.EF.Notification", b =>
@@ -626,6 +640,9 @@ namespace Models.Migrations
                     b.Property<string>("Action")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreateTime")
                         .HasColumnType("datetime2");
 
@@ -634,6 +651,9 @@ namespace Models.Migrations
 
                     b.Property<bool>("Seen")
                         .HasColumnType("bit");
+
+                    b.Property<string>("URL")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserID")
                         .HasColumnType("int");
@@ -722,78 +742,6 @@ namespace Models.Migrations
                     b.HasKey("ID");
 
                     b.ToTable("Participants");
-                });
-
-            modelBuilder.Entity("Models.EF.Permission", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("PermissionName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("ID");
-
-                    b.ToTable("Permissions");
-                });
-
-            modelBuilder.Entity("Models.EF.Resource", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("BackgroudColor")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("CheckRole")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("FontAwesome")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Link")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Menu")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Permission")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("State")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("UserID")
-                        .HasColumnType("int");
-
-                    b.HasKey("ID");
-
-                    b.ToTable("Resources");
-                });
-
-            modelBuilder.Entity("Models.EF.Revise", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("KPILevelCodePeriod")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PeriodValue")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("ID");
-
-                    b.ToTable("Revises");
                 });
 
             modelBuilder.Entity("Models.EF.Role", b =>
@@ -1047,6 +995,21 @@ namespace Models.Migrations
                     b.HasOne("Models.EF.Menu", null)
                         .WithMany("MenuLangs")
                         .HasForeignKey("MenuID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Models.EF.MenuRole", b =>
+                {
+                    b.HasOne("Models.EF.Menu", "Menu")
+                        .WithMany()
+                        .HasForeignKey("MenuID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Models.EF.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

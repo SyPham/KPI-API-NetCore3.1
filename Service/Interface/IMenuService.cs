@@ -9,12 +9,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Models.ViewModels.Menu;
 
 namespace Service.Interface
 {
    public interface IMenuService: IDisposable, ICommonService<Menu>
     {
-        Task<List<Permission>> GetPermissions();
+
+
     }
-     
+
 }

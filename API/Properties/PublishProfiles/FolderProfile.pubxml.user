@@ -6,6 +6,6 @@ by editing this MSBuild file. In order to learn more about this please visit htt
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <TimeStampOfAssociatedLegacyPublishXmlFile />
-    <_PublishTargetUrl>F:\API-Core3.1-Publish</_PublishTargetUrl>
+    <_PublishTargetUrl>F:\API</_PublishTargetUrl>
   </PropertyGroup>
 </Project>

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
 using Service.Interface;
+using Models.ViewModels.Menu;
 
 namespace Service.Implementation
 {
@@ -92,9 +93,17 @@ namespace Service.Implementation
         {
             return await _context.Users.FirstOrDefaultAsync(x => x.ID == Id);
         }
-        public async Task<List<Menu>> GetMenusAsync(int role)
+        public async Task<List<MenuViewModel>> GetMenusAsync(int role)
         {
-            return await _context.Menus.Where(x => x.Permission == role).ToListAsync();
+            var model =await _context.MenuRoles.Where(x => x.RoleID == role).Select(x => new MenuViewModel
+            {
+                Code = x.Menu.Code,
+                BackgroudColor = x.Menu.BackgroudColor,
+                Link = x.Menu.Link,
+                FontAwesome = x.Menu.FontAwesome,
+                Index = x.Index
+            }).ToListAsync();
+            return model;
         }
     }
 }

@@ -21,12 +21,7 @@ namespace Models.EF
         private DateTime? createTime = null;
         public DateTime CreateTime
         {
-            get
-            {
-                return this.createTime.HasValue
-                   ? this.createTime.Value
-                   : DateTime.Now;
-            }
+            get => this.createTime ?? DateTime.Now;
 
             set { this.createTime = value; }
         }

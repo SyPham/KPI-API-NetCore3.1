@@ -22,13 +22,12 @@ namespace API.Controllers
             ILevelService levelService )
         {
             _levelService = levelService;
-
-
         }
         /// <summary>
         /// Lấy ra danh sách oc theo tree view. URL: /AdminLevel/GetListTree
         /// </summary>
         /// <returns>Tất cả danh sách</returns>
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetListTree()
         {

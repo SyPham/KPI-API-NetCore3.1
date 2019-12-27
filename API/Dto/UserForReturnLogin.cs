@@ -10,6 +10,6 @@ namespace API.Dto
         public int ID { get; set; }
         public string Username { get; set; }
         public string Alias { get; set; }
-        public int Permission { get; set; }
+        public int Role { get; set; }
     }
 }

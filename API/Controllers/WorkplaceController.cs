@@ -17,12 +17,14 @@ using API.Helpers;
 using Microsoft.Extensions.Configuration;
 using OfficeOpenXml.Table;
 using OfficeOpenXml.Style;
+using API.SignalR;
+using Microsoft.AspNetCore.SignalR;
 
 namespace API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("[controller]/[action]")]
-    [Authorize]
     public class WorkplaceController : ControllerBase
     {
         private readonly IActionPlanService _actionPlanService;
@@ -30,17 +32,19 @@ namespace API.Controllers
         private readonly IConfiguration _configuration;
         private readonly ILevelService _levelService;
         private readonly IMailHelper _mailHelper;
-
+        private readonly IHubContext<HenryHub> _hubContext;
         public WorkplaceController(IActionPlanService actionPlanService,
                                    IDataService dataService,
                                    IConfiguration configuration,
                                    ILevelService levelService,
+                                   IHubContext<HenryHub> hubContext,
                                    IMailHelper mailHelper)
         {
             _actionPlanService = actionPlanService;
             _dataService = dataService;
             _configuration = configuration;
             _levelService = levelService;
+            _hubContext = hubContext;
             _mailHelper = mailHelper;
         }
 
@@ -66,8 +70,16 @@ namespace API.Controllers
         {
             return Ok(await _actionPlanService.LoadActionPlan(role, page, pageSize));
         }
-        [HttpGet]
-        public async Task<ActionResult> Import()
+       [HttpGet]
+       [AllowAnonymous]
+        public async Task<IActionResult> Test()
+        {
+
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage","user","message");
+            return Ok();
+        }
+        [HttpPost]
+        public async Task<ActionResult> Import([FromForm] IFormFile file2)
         {
             var URL = _configuration.GetSection("AppSettings:URL").Value.ToSafetyString();
             var url = URL + "/workplace";
@@ -111,14 +123,18 @@ namespace API.Controllers
                 }
 
                 var model = await _dataService.ImportData(datasList, aliasUser, userId);
-                //NotificationHub.SendNotifications();
-                if (model.ListDataSuccess.Count > 0)
+                //signalr
+
+                await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
+
+
+                if (model.ListDatasSuccess?.Count > 0)
                 {
 
-                    string content2 = System.IO.File.ReadAllText(URL + "wwwroot/Templates/UploadSuccessfully.html");
+                    string content2 = System.IO.File.ReadAllText("./wwwroot/Templates/UploadSuccessfully.html");
                     content2 = content2.Replace("{{{content}}}", "<b style='color:green'>Upload Data Successfully!</b><br/> Dear Updater, <br/> You just uploaded the KPIs as below list: ");
                     var html2 = string.Empty;
-                    foreach (var item in model.ListDataSuccess.DistinctBy(x => x.KPIName))
+                    foreach (var item in model.ListDatasSuccess.DistinctBy(x => x.KPIName))
                     {
                         var area = _levelService.GetNode(item.KPILevelCode);
                         html2 += @"<tr>
@@ -133,14 +149,14 @@ namespace API.Controllers
                     content2 = content2.Replace("{{{html-template}}}", html2).Replace("{{{href}}}", url);
                     await _mailHelper.SendEmailRangeAsync(model.ListSendMail, "[KPI System] Upload Data succesfully!", content2);
                 }
-                if (model.ListUploadKPIVMs.Count > 0)
+                if (model.ListDatasBelowTarget.Count > 0)
                 {
 
-                    string content = System.IO.File.ReadAllText(URL + "/Templates/BelowTarget.html");
+                    string content = System.IO.File.ReadAllText("./wwwroot/Templates/BelowTarget.html");
                     content = content.Replace("{{{content}}}", @"<b style='color:red'>Below Target!</b><br/>Dear Owner, <br/>Please add your comment and action plan because you did not archive kpi target as below list:");
                     var html = string.Empty;
 
-                    foreach (var item in model.ListUploadKPIVMs)
+                    foreach (var item in model.ListDatasBelowTarget)
                     {
                         var area = _levelService.GetNode(item.KPILevelCode);
                         if (item.Week > 0)
@@ -390,13 +406,15 @@ namespace API.Controllers
             worksheet.Column(7).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
             worksheet.DefaultColWidth = 20;
             worksheet.Column(2).AutoFit();
-
             return File(excelPackage.GetAsByteArray(), "application/octet-stream", "DataUpload.xlsx");
 
         }
+        [AllowAnonymous]
         [HttpGet("{userid}")]
         public ActionResult ExcelExport(int userid)
         {
+            //string token = Request.Headers["Authorization"].ToSafetyString();
+            //var userid = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
             var model = _dataService.DataExport(userid);
             var currentYear = DateTime.Now.Year;
             var currentWeek = DateTime.Now.GetIso8601WeekOfYear();
@@ -491,8 +509,15 @@ namespace API.Controllers
             worksheet.Column(7).Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             worksheet.DefaultColWidth = 20;
             worksheet.Column(2).AutoFit();
+            if (excelPackage == null)
+            {
+                return NotFound();
+            }
 
-            return File(excelPackage.GetAsByteArray(), "application/octet-stream", "DataUpload.xlsx");
+            byte[] data = excelPackage.GetAsByteArray() as byte[];
+
+            return File(data, "application/octet-stream", "DataUpload.xlsx");
+
         }
 
         [HttpGet("{userid}")]

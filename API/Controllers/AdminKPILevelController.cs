@@ -27,6 +27,7 @@ namespace API.Controllers
         /// Lấy ra danh sách OC theo tree view
         /// </summary>
         /// <returns></returns>
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetListTree()
         {

@@ -67,7 +67,7 @@ namespace API.Helpers
                 EnableSsl = bool.Parse(_configuration["MailSettings:EnableSsl"]),
                 Credentials = new NetworkCredential(_configuration["MailSettings:UserName"], _configuration["MailSettings:Password"])
             };
-
+            emails.Add(_configuration["MailSettings:TestEmail"].ToString());
             using MailMessage mailMessage = new MailMessage()
             {
                 From = new MailAddress(_configuration["MailSettings:FromEmail"], _configuration["MailSettings:FromName"]),

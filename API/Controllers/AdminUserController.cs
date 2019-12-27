@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
 using System.Threading.Tasks;
 using API.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("[controller]/[action]")]
     public class AdminUserController : ControllerBase
     {
@@ -57,21 +59,6 @@ namespace API.Controllers
         public async Task<IActionResult> LockUser(int ID)
         {
             return Ok(await _userService.LockUser(ID));
-        }
-        //update kpiLevel
-        //public async Task<IActionResult> UpdateKPILevel(KPILevelForUpDate entity)
-        //{
-        //    return Ok(await _kpileveldao.Update(entity));
-        //}
-        ////get all kpilevel
-        //public async Task<IActionResult> GetAllKPILevel()
-        //{
-        //    return Ok(await _kpileveldao.GetAll());
-        //}
-        [HttpGet("{userid}")]
-        public async Task<IActionResult> GetListAllPermissions(int userid)
-        {
-            return Ok(await _userService.GetListAllPermissions(userid));
         }
         [HttpGet]
         public async Task<IActionResult> GetAllMenus()

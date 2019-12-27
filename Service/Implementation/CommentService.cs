@@ -30,11 +30,23 @@ namespace Service.Implementation
             throw new NotImplementedException();
         }
 
+        private bool disposed = false;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    _dbContext.Dispose();
+                }
+            }
+            this.disposed = true;
+        }
         public void Dispose()
         {
-            throw new NotImplementedException();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
-
         public Task<List<Comment>> GetAll()
         {
             throw new NotImplementedException();
@@ -171,8 +183,8 @@ namespace Service.Implementation
             var listFullNameTag = new List<string>();
             var user = _dbContext.Users;
             var dataModel = _dbContext.Datas;
-            try
-            {
+            //try
+            //{
                 //add vao comment
                 var comment = new Comment();
                 comment.CommentMsg = entity.CommentMsg;
@@ -283,11 +295,11 @@ namespace Service.Implementation
                     Status = true,
                     ListEmails = listEmail
                 };
-            }
-            catch (Exception)
-            {
-                return new CommentForReturnViewModel { Status = false };
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    return new CommentForReturnViewModel { Status = false };
+            //}
         }
 
         public async Task<bool> AddCommentHistory(int userid, int dataid)

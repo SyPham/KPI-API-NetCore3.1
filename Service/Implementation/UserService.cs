@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Service.Implementation
 {
-   
+
     public class UserService : IUserService
     {
         private readonly DataContext _dbContext;
@@ -23,7 +23,7 @@ namespace Service.Implementation
         }
         public async Task<bool> Checkpermisson(int userid)
         {
-            var model = await (_dbContext.Permissions.Join(
+            var model = await (_dbContext.Roles.Join(
                 _dbContext.Users,
                p => p.ID,
                u => u.Permission,
@@ -36,27 +36,17 @@ namespace Service.Implementation
 
             return model != null ? true : false;
         }
-        public async Task<object> GetListAllPermissions(int userid)
+        public async Task<object> GetListAllRoles(int userid)
         {
-            var model = await _dbContext.Permissions.Select(x => new
+            var model = await _dbContext.Roles.Select(x => new
             {
                 x.ID,
-                x.PermissionName,
-                State = _dbContext.Users.FirstOrDefault(a => a.ID == userid && a.Permission == x.ID) != null ? true : false
+                x.Name,
+                State = _dbContext.Users.FirstOrDefault(a => a.ID == userid && a.Role == x.ID) != null ? true : false
             }).ToListAsync();
             return model;
         }
-        public object GetAllMenusByPermissionID(int id)
-        {
-            return _dbContext.Menus.Where(x => x.Permission == id).Select(x => new
-            {
-                x.ID,
-                x.Link,
-                x.Name,
-                x.Permission,
-                State = _dbContext.Resources.FirstOrDefault(a => a.Menu == x.ID) != null ? true : false
-            }).ToList();
-        }
+       
         public async Task<bool> ChangePassword(string username, string newpass)
         {
             var item = await _dbContext.Users.FirstOrDefaultAsync(x => x.Username == username);
@@ -68,10 +58,8 @@ namespace Service.Implementation
                 await _dbContext.SaveChangesAsync();
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
-                var message = ex.Message;
-                //logging
                 return false;
             }
         }
@@ -85,10 +73,9 @@ namespace Service.Implementation
                 _dbContext.SaveChanges();
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
-                var message = ex.Message;
-                //logging
+
                 return false;
             }
         }
@@ -113,10 +100,9 @@ namespace Service.Implementation
                 await _dbContext.SaveChangesAsync();
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
-                var message = ex.Message;
-                //logging
+
                 return false;
             }
 
@@ -126,7 +112,7 @@ namespace Service.Implementation
             _dbContext.Add(user);
             try
             {
-             await   _dbContext.SaveChangesAsync();
+                await _dbContext.SaveChangesAsync();
                 return true;
 
             }
@@ -155,11 +141,11 @@ namespace Service.Implementation
         }
         public async Task<bool> Remove(int ID)
         {
-            var user =await GetById(ID);
+            var user = await GetById(ID);
             _dbContext.Remove(user);
             try
             {
-               await _dbContext.SaveChangesAsync();
+                await _dbContext.SaveChangesAsync();
                 return true;
 
             }
@@ -172,7 +158,7 @@ namespace Service.Implementation
 
         public async Task<List<User>> GetAll()
         {
-            return await _dbContext.Users.Where(x=>x.State == true).ToListAsync();
+            return await _dbContext.Users.Where(x => x.State == true).ToListAsync();
         }
         public async Task<object> LoadDataUser(int levelid, string code, int page, int pageSize)
         {
@@ -206,35 +192,42 @@ namespace Service.Implementation
                 pageSize
             };
         }
-        public Task<User> GetById(int ID)
+        public async Task<User> GetById(int ID)
         {
-            return  _dbContext.Users.FirstOrDefaultAsync(x=>x.ID == ID);
+            return await _dbContext.Users.FirstOrDefaultAsync(x => x.ID == ID);
         }
 
         public async Task<bool> Update(User user)
         {
-            var item = GetById(user.ID);
+            var item = await GetById(user.ID);
+            item.Username = user.Username;
             try
             {
-               await _dbContext.SaveChangesAsync();
+                await _dbContext.SaveChangesAsync();
                 return true;
 
             }
-            catch (Exception)
+            catch
             {
 
                 return false;
             }
         }
 
-     
-        public Task<List<User>> GetAllById(int Id)
+
+        public async Task<List<User>> GetAllById(int Id)
         {
-            throw new NotImplementedException();
+            return await _dbContext.Users.Where(x => x.ID == Id).ToListAsync();
+
         }
 
 
-        public Task<PagedList<User>> GetAllPaging(string keyword, int page, int pageSize)
+        public async Task<PagedList<User>> GetAllPaging(string keyword, int page, int pageSize)
+        {
+            return await PagedList<User>.CreateAsync(_dbContext.Users, page, pageSize);
+        }
+
+        public Task<object> Sidebars(int role, int userid)
         {
             throw new NotImplementedException();
         }

@@ -11,9 +11,11 @@ using System.Linq;
 using Models.EF;
 using System.Collections.Generic;
 using Models.ViewModels.Notification;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("[controller]/[action]")]
     public class HomeController : ControllerBase
@@ -43,28 +45,30 @@ namespace API.Controllers
             _configuration = configuration;
         }
 
-        //public IActionResult ChangeLanguage(String Langby)
+        //public IActionResult ChangeLanguage(string Langby)
         //{
-        //    //if (Langby != null)
-        //    //{
-        //    //    var userProfile = Session["UserProfile"] as UserProfileVM;
+        //    if (Langby != null)
+        //    {
+        //        string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
+        //        string token = Request.Headers["Authorization"];
 
-        //    //    var sibars= new UserAdminDAO().Sidebars(userProfile.User.Permission,Langby);
-        //    //    var userVM = new UserProfileVM();
-        //    //    userVM.User = userProfile.User;
-        //    //    userVM.Menus = sibars;
+        //        var role = Extensions.DecodeToken(token).FirstOrDefault(x => x.Type == "role").Value.ToInt();
+        //        var sibars = new UserAdminDAO().Sidebars(role, Langby);
+        //        var userVM = new UserProfileVM();
+        //        userVM.User = userProfile.User;
+        //        userVM.Menus = sibars;
 
-        //    //    Session["UserProfile"] = userVM;
-        //    //    System.Threading.Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture(Langby);
-        //    //    System.Threading.Thread.CurrentThread.CurrentUICulture = new CultureInfo(Langby);
-        //    //}
+        //        Session["UserProfile"] = userVM;
+        //        System.Threading.Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture(Langby);
+        //        System.Threading.Thread.CurrentThread.CurrentUICulture = new CultureInfo(Langby);
+        //    }
 
-        //    //HttpCookie cookie = new HttpCookie("Lang");
-        //    //cookie.Value = Langby;
-        //    //Response.Cookies.Add(cookie);
-        //    //string urlReferrer = Request.UrlReferrer.ToString();
+        //    HttpCookie cookie = new HttpCookie("Lang");
+        //    cookie.Value = Langby;
+        //    Response.Cookies.Add(cookie);
+        //    string urlReferrer = Request.UrlReferrer.ToString();
 
-        //    //return Redirect(Request.UrlReferrer.ToString());
+        //    return Redirect(Request.UrlReferrer.ToString());
         //    return Ok();
         //}
         private async Task<bool> SendMail()
@@ -81,6 +85,8 @@ namespace API.Controllers
                 string content = System.IO.File.ReadAllText(URL + "/Templates/LateOnTask.html");
                 content = content.Replace("{{{content}}}", @"<b style='color:red'>Late On Task</b><br/>Your task have expired as below list: ");
                 var html = string.Empty;
+                var html2 = string.Empty;
+
                 var count = 0;
                 var model2 = _actionPlanService.CheckLateOnUpdateData();
                 var model = _actionPlanService.CheckDeadline();
@@ -116,7 +122,7 @@ namespace API.Controllers
                     {
                         //string content = "Please note that the action plan we are overdue on " + item.Deadline;
                         count++;
-                        html += @"<tr>
+                        html2 += @"<tr>
                             <td valign='top' style='padding:5px; font-family: Arial,sans-serif; font-size: 16px; line-height:20px;'>{{no}}</td>
                             <td valign='top' style='padding:5px; font-family: Arial,sans-serif; font-size: 16px; line-height:20px;'>{{kpiname}}</td>
                             <td valign='top' style='padding:5px; font-family: Arial,sans-serif; font-size: 16px; line-height:20px;'>{{deadline}}</td>
@@ -125,7 +131,7 @@ namespace API.Controllers
                                 .Replace("{{kpiname}}", item[0].ToSafetyString())
                                 .Replace("{{deadline}}", item[1].ToSafetyString("MM/dd/yyyy"));
                     }
-                    content = content.Replace("{{{html-template}}}", html);
+                    content = content.Replace("{{{html-template}}}", html2);
                     await _mailHelper.SendEmailRangeAsync(model.Item2.Select(x => x.Email).ToList(), "[KPI System] Late on task", content);
 
                 }
@@ -149,7 +155,7 @@ namespace API.Controllers
         public async Task<IActionResult> GetNotifications()
         {
             string token = Request.Headers["Authorization"];
-            var userID = Extensions.DecodeToken(token).FirstOrDefault(x => x.Type == "nameid").Value.ToInt();
+            var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
             if (userID == 1)
             {
                 return Ok(new { arrayID = new List<int>(), total = 0, data = new List<NotificationViewModel>() });
@@ -173,10 +179,14 @@ namespace API.Controllers
         public IActionResult ListHistoryNotification()
         {
             string token = Request.Headers["Authorization"];
-            var userID = Extensions.DecodeToken(token).FirstOrDefault(x => x.Type == "nameid").Value.ToInt();
+            var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
             if (userID > 0)
-                return Ok();
-            IEnumerable<NotificationViewModel> model = _notificationService.GetHistoryNotification(userID);
+            {
+                IEnumerable<NotificationViewModel> model = _notificationService.GetHistoryNotification(userID);
+                return Ok(model);
+                
+            }
+              
             return BadRequest();
         }
 

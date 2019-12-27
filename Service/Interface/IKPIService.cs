@@ -20,10 +20,11 @@ namespace Service.Interface
         List<Category> GetCategoryCode();
         Task<bool> Delete(int id);
         Task<KPI> GetbyId(int ID);
-        Task<object> GetAllPaging(int? categoryID, string name, int page, int pageSize = 3);
         Task<object> Autocomplete(string search);
         Task<object> GetAllAjax(string kpilevelcode, string period);
         Task<object> ListComments(int dataid, int userid);
+        Task<object> LoadData(string name, int page, int pageSize);
+
     }
-     
+
 }

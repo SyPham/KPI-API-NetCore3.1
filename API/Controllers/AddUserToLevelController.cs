@@ -1,5 +1,6 @@
 ﻿
 using API.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interface;
 using System;
@@ -10,6 +11,7 @@ using System.Web;
 
 namespace API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("[controller]/[action]")]
     public class AddUserToLevelController : ControllerBase

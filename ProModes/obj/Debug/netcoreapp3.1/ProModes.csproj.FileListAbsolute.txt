@@ -1,0 +1,5 @@
+F:\0.Document\NetCore3.1\Swagger\KPI-API-NetCore3.1\ProModes\bin\Debug\netcoreapp3.1\ProModes.deps.json
+F:\0.Document\NetCore3.1\Swagger\KPI-API-NetCore3.1\ProModes\bin\Debug\netcoreapp3.1\ProModes.dll
+F:\0.Document\NetCore3.1\Swagger\KPI-API-NetCore3.1\ProModes\obj\Debug\netcoreapp3.1\ProModes.csprojAssemblyReference.cache
+F:\0.Document\NetCore3.1\Swagger\KPI-API-NetCore3.1\ProModes\obj\Debug\netcoreapp3.1\ProModes.AssemblyInfoInputs.cache
+F:\0.Document\NetCore3.1\Swagger\KPI-API-NetCore3.1\ProModes\obj\Debug\netcoreapp3.1\ProModes.AssemblyInfo.cs

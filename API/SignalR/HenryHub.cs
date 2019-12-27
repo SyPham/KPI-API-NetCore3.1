@@ -6,8 +6,12 @@ using System.Threading.Tasks;
 
 namespace API.SignalR
 {
-    public class HenryHub: Hub
+    public class HenryHub : Hub
     {
+        public HenryHub()
+        {
+        }
+
         public async Task SendMessage(string user, string message)
         {
             await Clients.All.SendAsync("ReceiveMessage", user, message);

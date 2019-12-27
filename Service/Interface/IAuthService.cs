@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
+using Models.ViewModels.Menu;
 
 namespace Service.Interface
 {
@@ -16,7 +17,7 @@ namespace Service.Interface
         Task<User> FindByNameAsync(string username);
         Task<User> GetById(int Id);
         Task<Role> GetRolesAsync(int role);
-        Task<List<Menu>> GetMenusAsync(int role);
+        Task<List<MenuViewModel>> GetMenusAsync(int role);
 
         Task<User> Edit(string username);
     }

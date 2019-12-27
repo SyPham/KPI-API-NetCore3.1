@@ -22,12 +22,9 @@ namespace Models.Data
         public DbSet<SeenComment> SeenComments { get; set; }
 
         public DbSet<Role> Roles { get; set; }
-        public DbSet<Resource> Resources { get; set; }
-        public DbSet<Permission> Permissions { get; set; }
         public DbSet<Menu> Menus { get; set; }
         public DbSet<Unit> Units { get; set; }
 
-        public DbSet<Revise> Revises { get; set; }
         public DbSet<ActionPlan> ActionPlans { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<ActionPlanDetail> ActionPlanDetails { get; set; }
@@ -45,6 +42,8 @@ namespace Models.Data
         public DbSet<StateSendMail> StateSendMails { get; set; }
         public DbSet<Setting> Settings { get; set; }
         public DbSet<MenuLang> MenuLangs { get; set; }
+        public DbSet<MenuRole> MenuRoles { get; set; }
+
         public DataContext(DbContextOptions<DataContext> options) : base(options)
         {
 
@@ -52,8 +51,10 @@ namespace Models.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-
+            builder.Entity<MenuRole>()
+              .HasKey(c => new { c.RoleID, c.MenuID }); 
 
         }
+       
     }
 }

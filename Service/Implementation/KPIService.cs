@@ -146,10 +146,10 @@ namespace Service.Implementation
             return await _dbContext.Categories.ToListAsync();
         }
 
-        public async Task<object> GetAllPaging(int? categoryID, string name, int page, int pageSize = 3)
+        public async Task<object> LoadData(string name = "", int page = 1, int pageSize = 10)
         {
-            categoryID = categoryID.ToInt();
-            name = name.ToSafetyString();
+            name = name.ToSafetyString().ToLower();
+            
             var model = await _dbContext.KPIs.Select(
                 x => new KPIViewModel
                 {
@@ -163,24 +163,16 @@ namespace Service.Implementation
                     CreateTime = x.CreateTime
                 }
                 ).ToListAsync();
-            if (!string.IsNullOrEmpty(name))
+            if (!name.IsNullOrEmpty())
             {
                 model = model.Where(x => x.Name.Contains(name)).ToList();
             }
-
-            if (categoryID != 0)
-            {
-                model = model.Where(x => x.CategoryID == categoryID).ToList();
-            }
-            int totalRow = model.Count();
-
-            model = model.OrderByDescending(x => x.CreateTime)
-              .Skip((page - 1) * pageSize)
-              .Take(pageSize).ToList();
+            var pagedList = PagedList<KPIViewModel>.Create(model,page,pageSize);
             return new
             {
-                data = model,
-                total = totalRow,
+                data = pagedList,
+                total = pagedList.Count,
+                pageCount = pagedList.TotalPages,
                 status = true,
                 page,
                 pageSize
@@ -195,9 +187,7 @@ namespace Service.Implementation
                 return "";
         }
         private bool disposed = false;
-
       
-
         protected virtual void Dispose(bool disposing)
         {
             if (!this.disposed)
