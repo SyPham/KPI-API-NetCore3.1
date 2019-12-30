@@ -16,20 +16,13 @@ namespace Models.EF
         public int DataID { get; set; }
         public string Link { get; set; }
         public string Title { get; set; }
-        [Column(TypeName = "datetime")]
 
-        private DateTime? commentedDate = null;
-        public DateTime CommentedDate
+        public Comment()
         {
-            get
-            {
-                return this.commentedDate.HasValue
-                   ? this.commentedDate.Value
-                   : DateTime.Now;
-            }
-
-            set { this.commentedDate = value; }
+            CommentedDate = DateTime.Now;
         }
-      
+
+        public DateTime CommentedDate { get; set; }
+
     }
 }

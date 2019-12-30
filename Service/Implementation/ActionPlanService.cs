@@ -45,35 +45,44 @@ namespace Service.Implementation
             var auditor = obj.Auditor;
             var kpilevelcode = obj.KPILevelCode;
             var catid = obj.CategoryID;
+
+            //Neu KPILevelCode khong ton tai thi return
+
             var kpilevelModel = await _dbContext.KPILevels.FirstOrDefaultAsync(x => x.KPILevelCode == kpilevelcode);
+            if (kpilevelModel == null)
+                return new CommentForReturnViewModel
+                {
+                    Status = false,
+                    ListEmails = new List<string[]>(),
+                    Message = "Error!",
+                };
+
             //Kiem tra neu la owner thi moi cho add task(actionPlan)
             if (await _dbContext.Owners.FirstOrDefaultAsync(x => x.CategoryID == catid && x.UserID == obj.OwnerID && x.KPILevelID == kpilevelModel.ID) == null)
                 return new CommentForReturnViewModel
                 {
                     Status = false,
                     ListEmails = new List<string[]>(),
-                    Message = "You are not Owner of this KPI."
+                    Message = "You are not Owner of this KPI.",
                 };
             else
             {
-                var entity = new ActionPlan()
-                {
-                    Title = obj.Title,
-                    Description = obj.Description,
-                    KPILevelCodeAndPeriod = obj.KPILevelCodeAndPeriod,
-                    KPILevelCode = obj.KPILevelCode,
-                    Tag = obj.Tag,
-                    UserID = obj.UserID,
-                    DataID = obj.DataID,
-                    CommentID = obj.CommentID,
-                    Link = obj.Link,
-                    SubmitDate = obj.SubmitDate.ToDateTime(),
-                    Deadline = obj.Deadline.ToDateTime(),
-                };
-               
+                var entity = new ActionPlan();
+                entity.Title = obj.Title;
+                entity.Description = obj.Description;
+                entity.KPILevelCodeAndPeriod = obj.KPILevelCodeAndPeriod;
+                entity.KPILevelCode = obj.KPILevelCode;
+                entity.Tag = obj.Tag;
+                entity.UserID = obj.UserID;
+                entity.DataID = obj.DataID;
+                entity.CommentID = obj.CommentID;
+                entity.Link = obj.Link;
+                entity.SubmitDate = obj.SubmitDate.ToDateTime();
+                entity.Deadline = obj.Deadline.ToDateTime();
+                entity.CreateTime = DateTime.Now;
+                //entity.UpdateSheduleDate = DateTime.MinValue;
 
                 var user = _dbContext.Users;
-                var itemActionPlanDetail = new ActionPlanDetail();
                 var listEmail = new List<string[]>();
                 var listUserID = new List<int>();
                 var listFullNameTag = new List<string>();
@@ -102,10 +111,14 @@ namespace Service.Implementation
                     }
                     else
                     {
-                        entity.Description = string.Empty;
+                        entity.Description = "#N/A";
                     }
-                    var userResult = await _dbContext.Users.FirstOrDefaultAsync(x => x.Username == auditor);
-                    entity.Auditor = userResult.ID;
+                    if (!auditor.IsNullOrEmpty())
+                    {
+                        var userResult = await _dbContext.Users.FirstOrDefaultAsync(x => x.Username == auditor);
+                        entity.Auditor = userResult.ID;
+                    }
+
                     _dbContext.ActionPlans.Add(entity);
                     await _dbContext.SaveChangesAsync();
 
@@ -171,11 +184,10 @@ namespace Service.Implementation
                     notify.Title = subject;
                     notify.Action = "Task";
                     notify.TaskName = entity.Title;
+
                     await _notificationService.Add(notify);
 
                     //add vao user
-
-
                     return new CommentForReturnViewModel
                     {
                         Status = true,
@@ -192,8 +204,6 @@ namespace Service.Implementation
                     };
                 }
             }
-
-
         }
 
         public Task<bool> Add(ActionPlan entity)
@@ -330,9 +340,21 @@ namespace Service.Implementation
             throw new NotImplementedException();
         }
 
-        public Task<bool> Remove(int Id)
+        public async Task<bool> Remove(int Id)
         {
-            throw new NotImplementedException();
+            var item =await _dbContext.ActionPlans.FindAsync(Id);
+            _dbContext.ActionPlans.Remove(item);
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch 
+            {
+
+                return false;
+
+            }
         }
         public async Task<bool> UpdateActionPlan(ActionPlanForUpdateParams actionPlan)
         {

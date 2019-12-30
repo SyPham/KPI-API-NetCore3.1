@@ -50,6 +50,7 @@ namespace API.Controllers
         {
             return Ok(await _KPIService.Update(entity));
         }
+        [AllowAnonymous]
         [HttpGet("{ID}")]
         public async Task<IActionResult> GetbyID(int ID)
         {
@@ -64,8 +65,8 @@ namespace API.Controllers
         /// <param name="pageSize">Số dòng trên 1 trang</param>
         /// <returns>Trả về danh sách dữ liệu đã được phân trang</returns>
         /// 
-        [HttpGet("{page}/{pageSize}")]
-        [HttpGet("{name}/{page}/{pageSize}")]
+        [HttpPost("{page}/{pageSize}")]
+        [HttpPost("{page}/{pageSize}/{name}")]
         public async Task<IActionResult> LoadData(string name = "", int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _KPIService.LoadData(name, page, pageSize));

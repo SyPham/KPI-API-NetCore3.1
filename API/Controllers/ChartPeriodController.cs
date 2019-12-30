@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using API.SignalR;
+using System.Threading;
 
 namespace API.Controllers
 {
@@ -68,9 +69,12 @@ namespace API.Controllers
             string token = Request.Headers["Authorization"];
             var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
 
-            var levelNumberOfUserComment = Extensions.GetDecodeTokenByProperty(token, ClaimTypeEnum.LevelId.ToString()).ToInt();
+            var levelNumberOfUserComment = Extensions.GetDecodeTokenByProperty(token, "LevelId").ToInt();
 
             var data = await _commentService.AddComment(entity, levelNumberOfUserComment);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
+
+
             var tos = new List<string>();
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
 
@@ -79,17 +83,23 @@ namespace API.Controllers
                 var model = data.ListEmails.DistinctBy(x => x);
                 //string from = ConfigurationManager.AppSettings["FromEmailAddress"].ToSafetyString();
                 string content = "The account" + model.First()[0] + " mentioned you in KPI System Apps. Content: " + model.First()[4] + ". " + model.First()[3] + " Link: " + model.First()[2];
-                await _mailHelper.SendEmailRangeAsync(model.Select(x => x[1]).ToList(), "[KPI System] Comment", content);
+                Thread thread = new Thread(async () =>
+                {
+                    await _mailHelper.SendEmailRange(model.Select(x => x[1]).ToList(), "[KPI System] Comment", content);
+                });
+                thread.Start();
             }
+
             return Ok(new { status = data.Status, isSendmail = true });
         }
+        [AllowAnonymous]
         [HttpGet("{dataid}/{userid}")]
         public async Task<IActionResult> LoadDataComment(int dataid, int userid)
         {
             return Ok(await _commentService.ListComments(dataid, userid));
         }
         [HttpPost]
-        public async Task<IActionResult> AddCommentHistory([FromBody]int userid,int dataid)
+        public async Task<IActionResult> AddCommentHistory([FromBody]int userid, int dataid)
         {
             return Ok(await _commentService.AddCommentHistory(userid, dataid));
         }
@@ -131,17 +141,29 @@ namespace API.Controllers
 
             if (data.ListEmails.Count > 0 && await _settingService.IsSendMail("ADDTASK"))
             {
-                string content = "The account " + data.ListEmails.First()[0] + " mentioned you in KPI System Apps. Content: " + data.ListEmails.First()[4] + ". " + data.ListEmails.First()[3] + " Link: " + data.ListEmails.First()[2];
-                await _mailHelper.SendEmailRangeAsync(data.ListEmails.Select(x => x[1]).ToList(), "[KPI System] Action Plan (Add task)", content);
+                Thread thread = new Thread(async () =>
+                {
+                    string content = "The account " + data.ListEmails.First()[0] + " mentioned you in KPI System Apps. Content: " + data.ListEmails.First()[4] + ". " + data.ListEmails.First()[3] + " Link: " + data.ListEmails.First()[2];
+                    await _mailHelper.SendEmailRange(data.ListEmails.Select(x => x[1]).ToList(), "[KPI System] Action Plan (Add task)", content);
+                });
+                thread.Start();
+                
             }
             return Ok(new { status = data.Status, isSendmail = true });
         }
-        
+
         [HttpGet("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             return Ok(await _actionPlanService.Remove(id));
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> DeleteComment(int id)
+        {
+            return Ok(await _commentService.Remove(id));
+        }
+
         [HttpGet("{DataID}/{CommentID}/{UserID}")]
         public async Task<IActionResult> GetAll(int DataID, int CommentID, int UserID)
         {
@@ -162,10 +184,15 @@ namespace API.Controllers
 
             if (model.Item1.Count > 0 && await _settingService.IsSendMail("APPROVAL"))
             {
-                string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
-                var data = model.Item1.DistinctBy(x => x);
-                string content = "The account " + data.First()[0] + " was approved the task " + data.First()[3] + " Link: " + URL + "/Workplace";
-                await _mailHelper.SendEmailRangeAsync(data.Select(x => x[1]).ToList(), "[KPI System] Approved", content);
+                Thread thread = new Thread(async () =>
+                {
+                    string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
+                    var data = model.Item1.DistinctBy(x => x);
+                    string content = "The account " + data.First()[0] + " was approved the task " + data.First()[3] + " Link: " + URL + "/Workplace";
+                    await _mailHelper.SendEmailRange(data.Select(x => x[1]).ToList(), "[KPI System] Approved", content);
+                });
+                thread.Start();
+               
 
             }
             return Ok(new { status = model.Item2, isSendmail = true });
@@ -183,12 +210,15 @@ namespace API.Controllers
 
             if (model.Item1.Count > 0 && await _settingService.IsSendMail("DONE"))
             {
-                string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
+                Thread thread = new Thread(async () =>
+                {
+                    string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
 
-                var data = model.Item1.DistinctBy(x => x);
-                string content = "The account " + data.First()[0] + " has finished the task" + data.First()[3] + " Link: " + URL + "/Workplace";
-                await _mailHelper.SendEmailRangeAsync(data.Select(x => x[1]).ToList(), "[KPI System] Action Plan (Done)", content);
-
+                    var data = model.Item1.DistinctBy(x => x);
+                    string content = "The account " + data.First()[0] + " has finished the task" + data.First()[3] + " Link: " + URL + "/Workplace";
+                    await _mailHelper.SendEmailRange(data.Select(x => x[1]).ToList(), "[KPI System] Action Plan (Done)", content);
+                });
+                thread.Start();
             }
             return Ok(new { status = model.Item2, isSendmail = true });
         }
@@ -205,12 +235,13 @@ namespace API.Controllers
         {
             return Ok(await _actionPlanService.UpdateActionPlan(actionPlan));
         }
+        [AllowAnonymous]
         [HttpPost]
-        public async Task<IActionResult> UpdateSheduleDate([FromBody]string name, string value,string pk)
+        public async Task<IActionResult> UpdateSheduleDate([FromBody]string name, string value, string pk,int userid)
         {
-            string token = Request.Headers["Authorization"];
-            var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
-            return Ok(await _actionPlanService.UpdateSheduleDate(name, value, pk, userID));
+            //string token = Request.Headers["Authorization"];
+            //var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
+            return Ok(await _actionPlanService.UpdateSheduleDate(name, value, pk, userid));
         }
 
         //public async Task<IActionResult> GetAllDataByCategory(int catid, string period, int? year)

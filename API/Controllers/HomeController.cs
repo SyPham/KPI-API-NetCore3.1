@@ -45,32 +45,6 @@ namespace API.Controllers
             _configuration = configuration;
         }
 
-        //public IActionResult ChangeLanguage(string Langby)
-        //{
-        //    if (Langby != null)
-        //    {
-        //        string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
-        //        string token = Request.Headers["Authorization"];
-
-        //        var role = Extensions.DecodeToken(token).FirstOrDefault(x => x.Type == "role").Value.ToInt();
-        //        var sibars = new UserAdminDAO().Sidebars(role, Langby);
-        //        var userVM = new UserProfileVM();
-        //        userVM.User = userProfile.User;
-        //        userVM.Menus = sibars;
-
-        //        Session["UserProfile"] = userVM;
-        //        System.Threading.Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture(Langby);
-        //        System.Threading.Thread.CurrentThread.CurrentUICulture = new CultureInfo(Langby);
-        //    }
-
-        //    HttpCookie cookie = new HttpCookie("Lang");
-        //    cookie.Value = Langby;
-        //    Response.Cookies.Add(cookie);
-        //    string urlReferrer = Request.UrlReferrer.ToString();
-
-        //    return Redirect(Request.UrlReferrer.ToString());
-        //    return Ok();
-        //}
         private async Task<bool> SendMail()
         {
             string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
@@ -111,7 +85,7 @@ namespace API.Controllers
                                 .Replace("{{deadline}}", item2[1].ToSafetyString());
                     }
                     content2 = content2.Replace("{{{html-template}}}", html);
-                    await _mailHelper.SendEmailRangeAsync(model2.Item2.Select(x => x.Email).ToList(), "[KPI System] Late on upload data", content2);
+                    await _mailHelper.SendEmailRange(model2.Item2.Select(x => x.Email).ToList(), "[KPI System] Late on upload data", content2);
 
 
                 }
@@ -132,7 +106,7 @@ namespace API.Controllers
                                 .Replace("{{deadline}}", item[1].ToSafetyString("MM/dd/yyyy"));
                     }
                     content = content.Replace("{{{html-template}}}", html2);
-                    await _mailHelper.SendEmailRangeAsync(model.Item2.Select(x => x.Email).ToList(), "[KPI System] Late on task", content);
+                    await _mailHelper.SendEmailRange(model.Item2.Select(x => x.Email).ToList(), "[KPI System] Late on task", content);
 
                 }
                 var itemSendMail = new StateSendMail();

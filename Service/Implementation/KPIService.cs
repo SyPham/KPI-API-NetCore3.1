@@ -226,9 +226,9 @@ namespace Service.Implementation
 
         }
 
-        public Task<KPI> GetById(int Id)
+        public async Task<KPI> GetById(int Id)
         {
-            throw new NotImplementedException();
+            return await _dbContext.KPIs.FindAsync(Id);
         }
 
         public Task<List<KPI>> GetAllById(int Id)

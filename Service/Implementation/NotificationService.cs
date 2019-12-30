@@ -65,9 +65,51 @@ namespace Service.Implementation
             var model1 = model.OrderByDescending(x => x.CreateTime).ToList();
             return model1;
         }
-        public Task<bool> Add(Notification entity)
+        public async Task<bool> Add(Notification entity)
         {
-            throw new NotImplementedException();
+            try
+            {
+                //Add thong bao
+                _dbContext.Notifications.Add(entity);
+                await _dbContext.SaveChangesAsync();
+                var listUserID = new List<int>();
+                var listDetails = new List<NotificationDetail>();
+
+                var user = _dbContext.Users;
+                var tag = _dbContext.Tags;
+
+                //Neu thong bao cua comment thi vao bang tag lay tat ca user dc tag ra
+                if (entity.CommentID > 0)
+                {
+                    listUserID.AddRange(await tag.Where(x => x.CommentID == entity.CommentID).Select(x => x.UserID).ToArrayAsync());
+                }
+                var itemActionPlan = await _dbContext.Notifications.FirstOrDefaultAsync(x => x.UserID == entity.UserID && x.Action == entity.Action && x.ActionplanID == entity.ActionplanID);
+                //Neu thong bao cua actioPlan thi vao bang tag lay tat ca user dc tag ra
+                if (entity.ActionplanID > 0)
+                {
+                    listUserID.AddRange(await tag.Where(x => x.ActionPlanID == entity.ActionplanID).Select(x => x.UserID).ToArrayAsync());
+                }
+
+                //Neu co tag thi them vao bang NotificationDetail
+                if (listUserID.Count > 0)
+                {
+                    foreach (var item in listUserID)
+                    {
+                        var detail = new NotificationDetail();
+                        detail.UserID = item;
+                        detail.Seen = false;
+                        detail.NotificationID = entity.ID;
+                        listDetails.Add(detail);
+                    }
+                    _dbContext.NotificationDetails.AddRange(listDetails);
+                    await _dbContext.SaveChangesAsync();
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
         private bool disposed = false;
         protected virtual void Dispose(bool disposing)

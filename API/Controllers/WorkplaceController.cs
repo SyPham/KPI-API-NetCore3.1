@@ -19,6 +19,7 @@ using OfficeOpenXml.Table;
 using OfficeOpenXml.Style;
 using API.SignalR;
 using Microsoft.AspNetCore.SignalR;
+using System.Threading;
 
 namespace API.Controllers
 {
@@ -147,7 +148,12 @@ namespace API.Controllers
                         .Replace("{{kpiname}}", item.KPIName);
                     }
                     content2 = content2.Replace("{{{html-template}}}", html2).Replace("{{{href}}}", url);
-                    await _mailHelper.SendEmailRangeAsync(model.ListSendMail, "[KPI System] Upload Data succesfully!", content2);
+                    Thread thread = new Thread(async () =>
+                    {
+                        await _mailHelper.SendEmailRangeAsync(model.ListSendMail, "[KPI System] Upload Data succesfully!", content2);
+
+                    });
+                    thread.Start();
                 }
                 if (model.ListDatasBelowTarget.Count > 0)
                 {
@@ -215,7 +221,12 @@ namespace API.Controllers
                     }
 
                     content = content.Replace("{{{html-template}}}", html).Replace("{{{href}}}", url);
-                    await _mailHelper.SendEmailRangeAsync(model.ListSendMail, "[KPI System] Below Target", content);
+                    Thread thread = new Thread(async () =>
+                    {
+                        await _mailHelper.SendEmailRangeAsync(model.ListSendMail, "[KPI System] Below Target", content);
+                    });
+                    thread.Start();
+                    
                     //signalR
                     return Ok(model.Status);
                 }

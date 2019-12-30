@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Models.Data;
+using System.Text.RegularExpressions;
 
 namespace Service.Implementation
 {
@@ -72,9 +73,21 @@ namespace Service.Implementation
             throw new NotImplementedException();
         }
 
-        public Task<bool> Remove(int Id)
+        public async Task<bool> Remove(int Id)
         {
-            throw new NotImplementedException();
+            var item = await _dbContext.Comments.FindAsync(Id);
+            _dbContext.Comments.Remove(item);
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+
+                return false;
+
+            }
         }
 
         public Task<bool> Update(Comment entity)
@@ -112,8 +125,13 @@ namespace Service.Implementation
             var user = _dbContext.Users;
             if (users.IndexOf(',') == -1) //Neu tag 1 nguoi
             {
-                var username = users.Trim();
-                var recipient = await user.FirstOrDefaultAsync(x => x.Username == username);// nguoi nhan
+                if (users.IndexOf("@") != -1)
+                {
+                    users= users.Replace("@", "").Trim();
+                }
+                var username = users;
+
+            var recipient = await user.FirstOrDefaultAsync(x => x.Username == username);// nguoi nhan
                 if (recipient != null)
                 {
                     var itemtag = new Tag();
@@ -137,7 +155,14 @@ namespace Service.Implementation
             }
             else//Tag nhieu nguoi
             {
+                if(users.IndexOf("@") != -1)
+                {
+                    Regex pattern = new Regex("s[@]");
+                    pattern.Replace(users, "");
+                }
+              
                 var list = users.Split(',');
+
                 var commentID = comment.ID;
                 var listUserID = await _dbContext.Tags.Where(x => x.ActionPlanID == comment.ID).Select(x => x.UserID).ToListAsync();
                 var listUsers = await _dbContext.Users.Where(x => list.Contains(x.Username)).ToListAsync();
@@ -183,16 +208,16 @@ namespace Service.Implementation
             var listFullNameTag = new List<string>();
             var user = _dbContext.Users;
             var dataModel = _dbContext.Datas;
-            //try
-            //{
+            try
+            {
                 //add vao comment
-                var comment = new Comment();
-                comment.CommentMsg = entity.CommentMsg;
-                comment.DataID = entity.DataID;
-                comment.UserID = entity.UserID;//sender
-                comment.Link = entity.Link;
-                comment.Title = entity.Title;
-                await CreateComment(comment);
+                var comment2 = new Comment();
+                comment2.CommentMsg = entity.CommentMsg;
+                comment2.DataID = entity.DataID;
+                comment2.UserID = entity.UserID;//sender
+                comment2.Link = entity.Link;
+                comment2.Title = entity.Title;
+            var comment = await CreateComment(comment2);
 
                 //B1: Xu ly viec gui thong bao den Owner khi nguoi gui cap cao hon comment
                 //Tim levelNumber cua user comment
@@ -295,11 +320,11 @@ namespace Service.Implementation
                     Status = true,
                     ListEmails = listEmail
                 };
-            //}
-            //catch (Exception ex)
-            //{
-            //    return new CommentForReturnViewModel { Status = false };
-            //}
+        }
+            catch (Exception ex)
+            {
+                return new CommentForReturnViewModel { Status = false };
+}
         }
 
         public async Task<bool> AddCommentHistory(int userid, int dataid)
