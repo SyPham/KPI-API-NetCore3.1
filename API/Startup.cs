@@ -44,9 +44,10 @@ namespace API
             var appSettingsSection = Configuration.GetSection("AppSettings");
             services.Configure<AppSettings>(appSettingsSection);
 
-            
+
             services.AddControllers().AddNewtonsoftJson(options =>
             {
+                // Use the default property (Pascal) casing
                 options.SerializerSettings.ContractResolver = new DefaultContractResolver();
             });
 

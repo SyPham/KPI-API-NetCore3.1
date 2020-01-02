@@ -23,7 +23,7 @@ namespace API.Controllers
         }
 
         // GET: AddUserToLevel
-        [HttpGet("{id}/{levelid}")]
+        [HttpPost("{id}/{levelid}")]
         public async Task<IActionResult> AddUserToLevel(int id, int levelid)
         {
             return Ok(await _userService.AddUserToLevel(id, levelid));

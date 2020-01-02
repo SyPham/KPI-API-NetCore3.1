@@ -34,11 +34,20 @@ namespace API.Controllers
         {
             return Ok(await _userService.GetAll());
         }
-        [HttpGet("{search}")]
-        [HttpGet("{search}/{page}/{pageSize}")]
-        public async Task<IActionResult> LoadData(string search, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
+        [AllowAnonymous]
+        [HttpPost("{page}/{pageSize}")]
+        [HttpPost("{page}/{pageSize}/{name}")]
+        public async Task<IActionResult> LoadData(string name, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
-            return Ok(await _userService.GetAllPaging(search, page, pageSize));
+            var model = await _userService.GetAllPaging(name, page, pageSize);
+            return Ok(new
+            {
+                data = await _userService.GetAllPaging(name, page, pageSize),
+                page = model.CurrentPage,
+                pageSize = model.PageSize,
+                pageCount = model.TotalPages,
+
+            });
         }
         [HttpGet("{id}")]
         public async Task<IActionResult> Delete(int id)

@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using API.SignalR;
 using System.Threading;
+using API.Dto;
+using API.Dto.ChartPeriod;
 
 namespace API.Controllers
 {
@@ -176,9 +178,9 @@ namespace API.Controllers
             return Ok(await _actionPlanService.GetById(id));
         }
         [HttpPost]
-        public async Task<IActionResult> Approval([FromBody]int id, int approveby, string KPILevelCode, int CategoryID)
+        public async Task<IActionResult> Approval([FromBody]ApprovalDto obj)
         {
-            var model = await _actionPlanService.Approve(id, approveby, KPILevelCode, CategoryID);
+            var model = await _actionPlanService.Approve(obj.id, obj.approveby, obj.KPILevelCode, obj.CategoryID);
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
 
 
@@ -198,13 +200,13 @@ namespace API.Controllers
             return Ok(new { status = model.Item2, isSendmail = true });
         }
         [HttpPost]
-        public async Task<IActionResult> Done([FromBody]int id, string KPILevelCode, int CategoryID)
+        public async Task<IActionResult> Done([FromBody]DoneDto obj)
         {
 
             string token = Request.Headers["Authorization"];
             var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
 
-            var model = await _actionPlanService.Done(id, userID, KPILevelCode, CategoryID);
+            var model = await _actionPlanService.Done(obj.id, userID, obj.KPILevelCode, obj.CategoryID);
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
 
 
@@ -237,11 +239,11 @@ namespace API.Controllers
         }
         [AllowAnonymous]
         [HttpPost]
-        public async Task<IActionResult> UpdateSheduleDate([FromBody]string name, string value, string pk,int userid)
+        public async Task<IActionResult> UpdateSheduleDate([FromForm]UpdateActionPlanDto obj)
         {
             //string token = Request.Headers["Authorization"];
             //var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
-            return Ok(await _actionPlanService.UpdateSheduleDate(name, value, pk, userid));
+            return Ok(await _actionPlanService.UpdateSheduleDate(obj.name, obj.value, obj.pk, obj.userid));
         }
 
         //public async Task<IActionResult> GetAllDataByCategory(int catid, string period, int? year)

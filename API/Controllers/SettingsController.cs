@@ -54,7 +54,7 @@ namespace API.Controllers
 
         }
         [HttpGet("{keyword}")]
-        [HttpGet("{keyword}/{page}/{pageSize}")]
+        [HttpGet("{page}/{pageSize}/{keyword}")]
         public async Task<IActionResult> GetAllPaging(string keyword, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _settingService.GetAllPaging(keyword, page, pageSize));

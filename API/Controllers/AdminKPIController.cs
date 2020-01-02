@@ -65,6 +65,7 @@ namespace API.Controllers
         /// <param name="pageSize">Số dòng trên 1 trang</param>
         /// <returns>Trả về danh sách dữ liệu đã được phân trang</returns>
         /// 
+        [AllowAnonymous]
         [HttpPost("{page}/{pageSize}")]
         [HttpPost("{page}/{pageSize}/{name}")]
         public async Task<IActionResult> LoadData(string name = "", int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
