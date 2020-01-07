@@ -84,10 +84,13 @@ namespace API.Controllers
             {
                 var model = data.ListEmails.DistinctBy(x => x);
                 //string from = ConfigurationManager.AppSettings["FromEmailAddress"].ToSafetyString();
-                string content = "The account" + model.First()[0] + " mentioned you in KPI System Apps. Content: " + model.First()[4] + ". " + model.First()[3] + " Link: " + model.First()[2];
+                string content = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
+                                   <p>The account <b>" + model.First()[0] + "</b> mentioned you in KPI System Apps. </p>" +
+                                  "<p>Content: " + model.First()[4] + "</p>" +
+                                  "<p>Link: <a href='" + data.QueryString + "'>Click Here</a></p>";
                 Thread thread = new Thread(async () =>
                 {
-                    await _mailHelper.SendEmailRange(model.Select(x => x[1]).ToList(), "[KPI System] Comment", content);
+                    await _mailHelper.SendEmailRange(model.Select(x => x[1]).ToList(), "[KPI System-02] Comment", content);
                 });
                 thread.Start();
             }
@@ -143,13 +146,30 @@ namespace API.Controllers
 
             if (data.ListEmails.Count > 0 && await _settingService.IsSendMail("ADDTASK"))
             {
+
+                string contentForPIC = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
+                                <p>The account <b>" + data.ListEmails.First()[0].ToTitleCase() + "</b> assigned a task to you in KPI Sytem App. </p>" +
+                                "<p>Task name : <b>" + data.ListEmails.First()[3] + "</b></p>" +
+                                "<p>Description : " + data.ListEmails.First()[4] + "</p>" +
+                                "<p>Link: <a href='" + data.QueryString + "'>Click Here</a></p>";
+
+                string contentAuditor = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
+                                <p>The account <b>" + data.ListEmailsForAuditor.First()[0].ToTitleCase() + "</b> created a new task ,assigned you are an auditor in KPI Sytem App. </p>" +
+                                "<p>Task name : <b>" + data.ListEmailsForAuditor.First()[3] + "</b></p>" +
+                                "<p>Description : " + data.ListEmailsForAuditor.First()[4] + "</p>" +
+                                "<p>Link: <a href='" + data.QueryString + "'>Click Here</a></p>";
                 Thread thread = new Thread(async () =>
                 {
-                    string content = "The account " + data.ListEmails.First()[0] + " mentioned you in KPI System Apps. Content: " + data.ListEmails.First()[4] + ". " + data.ListEmails.First()[3] + " Link: " + data.ListEmails.First()[2];
-                    await _mailHelper.SendEmailRange(data.ListEmails.Select(x => x[1]).ToList(), "[KPI System] Action Plan (Add task)", content);
+                    await _mailHelper.SendEmailRange(data.ListEmails.Select(x => x[1]).ToList(), "[KPI System-03] Action Plan (Add Task - Assign Auditor)", contentAuditor);
+                });
+                Thread thread2= new Thread(async () =>
+                {
+                    await _mailHelper.SendEmailRange(data.ListEmails.Select(x => x[1]).ToList(), "[KPI System-03] Action Plan (Add Task)", contentForPIC);
                 });
                 thread.Start();
-                
+                thread2.Start();
+
+
             }
             return Ok(new { status = data.Status, isSendmail = true });
         }
@@ -190,8 +210,10 @@ namespace API.Controllers
                 {
                     string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
                     var data = model.Item1.DistinctBy(x => x);
-                    string content = "The account " + data.First()[0] + " was approved the task " + data.First()[3] + " Link: " + URL + "/Workplace";
-                    await _mailHelper.SendEmailRange(data.Select(x => x[1]).ToList(), "[KPI System] Approved", content);
+                    string content = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
+                                   <p>The account <b>" + data.First()[0].ToTitleCase() + "</b> approved the task <b>'" + data.First()[3] + "'</b> </p>" +
+                                 "<p>Link: <a href='" + model.Item3 + "'>Click Here</a></p>";
+                    await _mailHelper.SendEmailRange(data.Select(x => x[1]).ToList(), "[KPI System-05] Approved", content);
                 });
                 thread.Start();
                
@@ -217,8 +239,10 @@ namespace API.Controllers
                     string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
 
                     var data = model.Item1.DistinctBy(x => x);
-                    string content = "The account " + data.First()[0] + " has finished the task" + data.First()[3] + " Link: " + URL + "/Workplace";
-                    await _mailHelper.SendEmailRange(data.Select(x => x[1]).ToList(), "[KPI System] Action Plan (Done)", content);
+                    string content = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
+                                    <p>The account <b>" + data.First()[0].ToTitleCase() + "</b> has finished the task name <b>'" + data.First()[3] + "'</b></p>" +
+                                  "<p>Link: <a href='" + model.Item3 + "'>Click Here</a></p>";
+                    await _mailHelper.SendEmailRange(data.Select(x => x[1]).ToList(), "[KPI System-04] Action Plan (Finished Task)", content);
                 });
                 thread.Start();
             }
@@ -244,6 +268,22 @@ namespace API.Controllers
             //string token = Request.Headers["Authorization"];
             //var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
             return Ok(await _actionPlanService.UpdateSheduleDate(obj.name, obj.value, obj.pk, obj.userid));
+        }
+        [AllowAnonymous]
+        [HttpPost("{code}")]
+        [HttpPost("{code}/{page}/{pageSize}")]
+        public async Task<ActionResult> ListTasks(string code, int? page,int?pageSize)
+        {
+            var pagedList =await _dataService.ListTasks(code, page, pageSize);
+            return Ok(new
+            {
+                data = pagedList,
+                total = pagedList.Count,
+                pageCount = pagedList.TotalPages,
+                status = true,
+                page,
+                pageSize
+            });
         }
 
         //public async Task<IActionResult> GetAllDataByCategory(int catid, string period, int? year)

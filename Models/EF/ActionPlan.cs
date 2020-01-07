@@ -18,7 +18,7 @@ namespace Models.EF
         public int UserID { get; set; }
         public int DataID { get; set; }
         public int CommentID { get; set; }
-
+        public string Name { get; set; }
         [Column("Title")]
         public string Title { get; set; }
         public string KPILevelCodeAndPeriod { get; set; }

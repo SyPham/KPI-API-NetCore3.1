@@ -9,5 +9,8 @@ namespace Models.ViewModels.Comment
         public bool Status { get; set; }
         public List<string[]> ListEmails { get; set; }
         public string Message { get; set; }
+        public List<string[]> ListEmailsForAuditor { get; set; }
+        public string QueryString { get; set; }
+
     }
 }

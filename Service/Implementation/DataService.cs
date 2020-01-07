@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Service.Helpers;
 using Service.Interface;
 using Microsoft.Extensions.Configuration;
+using Models.ViewModels.ActionPlan;
 
 namespace Service.Implementation
 {
@@ -1851,7 +1852,7 @@ namespace Service.Implementation
                 }
             }
 
-          await _dbContext.NotificationDetails.AddRangeAsync(listNotification);
+            await _dbContext.NotificationDetails.AddRangeAsync(listNotification);
             try
             {
                 await _dbContext.SaveChangesAsync();
@@ -2132,6 +2133,56 @@ namespace Service.Implementation
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public async Task AddLateOnUploadAsync(List<LateOnUpLoad> lateOnUpLoads)
+        {
+            try
+            {
+                await _dbContext.LateOnUpLoads.AddRangeAsync(lateOnUpLoads);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch
+            {
+
+            }
+        }
+
+        public PagedList<LateOnUpLoad> LateOnUpLoads(int userId, int notificationId, int? page, int? pageSize)
+        {
+            var source = _dbContext.LateOnUpLoads.Where(x => x.UserID == userId && x.NotificationID == notificationId).ToList();
+
+            return PagedList<LateOnUpLoad>.Create(source, page ?? 1, pageSize ?? 20);
+        }
+        public async Task<PagedList<ActionPlanTagViewModel>> ListTasks(string code,int? page, int? pageSize)
+        {
+            var actionPlans = new List<ActionPlanTagViewModel>();
+            var model = await _dbContext.ActionPlans.Where(x => x.KPILevelCode == code).ToListAsync();
+            foreach (var x in model)
+            {
+                var kpilevel = await _dbContext.KPILevels.FirstOrDefaultAsync(a => a.KPILevelCode == x.KPILevelCode);
+                var ocName = _levelService.GetNode(kpilevel.LevelID);
+                var kpiName = (await _dbContext.KPIs.FirstOrDefaultAsync(a => a.ID == kpilevel.KPIID)).Name;
+                var createdBy = (await _dbContext.Users.FirstOrDefaultAsync(a => a.ID == x.UserID)).Alias;
+
+                actionPlans.Add(new ActionPlanTagViewModel
+                {
+                    TaskName = x.Title,
+                    Description = x.Description,
+                    DueDate = x.Deadline.ToString("dddd, dd MMMM yyyy"),
+                    UpdateSheduleDate = x.UpdateSheduleDate?.ToString("dddd, dd MMMM yyyy") ?? "#N/A",
+                    ActualFinishDate = x.ActualFinishDate?.ToString("dddd, dd MMMM yyyy") ?? "#N/A",
+                    Status = x.Status,
+                    PIC = x.Tag,
+                    Approved = x.ApprovedStatus,
+                    KPIName = kpiName,
+                    OC = ocName,
+                    URL = _dbContext.Notifications.FirstOrDefault(a => a.ActionplanID == x.ID)?.Link,
+                    CreatedBy = createdBy,
+                    CreatedDate = x.CreateTime.ToString("dddd, dd MMMM yyyy")
+                });
+            }
+            return PagedList<ActionPlanTagViewModel>.Create(actionPlans, page ?? 1, pageSize ?? 20);
         }
     }
 }

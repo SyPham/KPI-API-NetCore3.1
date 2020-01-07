@@ -181,7 +181,7 @@ namespace Service.Implementation
                ID = x.ID,
                NotificationID = x.NotificationID,
                Title = x.Title,
-               KPIName = _dbContext.KPIs.FirstOrDefault(kpi => kpi.ID == kpilevel.FirstOrDefault(a => a.KPILevelCode == x.KPILevelCode).KPIID).Name,
+               KPIName = x.KPIName ?? "#N/A",
                Period = x.Period,
                Sender = _dbContext.Users.FirstOrDefault(a => a.ID == x.SenderID)?.Alias,
                Recipient = _dbContext.Users.FirstOrDefault(a => a.ID == x.RecipientID)?.Alias,
@@ -226,5 +226,7 @@ namespace Service.Implementation
             DateTime today = DateTime.Today.Add(timespan);
             return await _dbContext.StateSendMails.FirstOrDefaultAsync(x => x.ToDay == today) == null ? false : true;
         }
+
+      
     }
 }

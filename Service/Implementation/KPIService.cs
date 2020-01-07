@@ -81,6 +81,7 @@ namespace Service.Implementation
         }
         public async Task<bool> Update(KPI entity)
         {
+
             entity.Code = entity.Code.ToSafetyString().ToUpper();
             try
             {

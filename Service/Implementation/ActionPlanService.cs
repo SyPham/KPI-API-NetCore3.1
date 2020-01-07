@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace Service.Implementation
 {
@@ -19,16 +20,19 @@ namespace Service.Implementation
     {
         private readonly DataContext _dbContext;
         private readonly IErrorMessageService _errorService;
+        private readonly IDataService _dataService;
         private readonly INotificationService _notificationService;
         private readonly ILevelService _levelService;
 
         public ActionPlanService(DataContext dbContext,
             IErrorMessageService errorService,
+            IDataService dataService,
             INotificationService notificationService,
             ILevelService levelService)
         {
             _dbContext = dbContext;
             _errorService = errorService;
+            _dataService = dataService;
             _notificationService = notificationService;
             _levelService = levelService;
         }
@@ -45,10 +49,8 @@ namespace Service.Implementation
             var auditor = obj.Auditor;
             var kpilevelcode = obj.KPILevelCode;
             var catid = obj.CategoryID;
-
-            //Neu KPILevelCode khong ton tai thi return
-
             var kpilevelModel = await _dbContext.KPILevels.FirstOrDefaultAsync(x => x.KPILevelCode == kpilevelcode);
+
             if (kpilevelModel == null)
                 return new CommentForReturnViewModel
                 {
@@ -57,7 +59,7 @@ namespace Service.Implementation
                     Message = "Error!",
                 };
 
-            //Kiem tra neu la owner thi moi cho add task(actionPlan)
+            //Bước 1: Kiem tra neu la owner thi moi cho add task(actionPlan)
             if (await _dbContext.Owners.FirstOrDefaultAsync(x => x.CategoryID == catid && x.UserID == obj.OwnerID && x.KPILevelID == kpilevelModel.ID) == null)
                 return new CommentForReturnViewModel
                 {
@@ -67,7 +69,9 @@ namespace Service.Implementation
                 };
             else
             {
+                var title = Regex.Replace(subject.Split('-')[0].ToSafetyString(), @"\s+", "-");
                 var entity = new ActionPlan();
+                entity.Name = subject;
                 entity.Title = obj.Title;
                 entity.Description = obj.Description;
                 entity.KPILevelCodeAndPeriod = obj.KPILevelCodeAndPeriod;
@@ -75,77 +79,129 @@ namespace Service.Implementation
                 entity.Tag = obj.Tag;
                 entity.UserID = obj.UserID;
                 entity.DataID = obj.DataID;
+                entity.Name = _dbContext.KPIs.FirstOrDefault(x => x.ID == kpilevelModel.KPIID)?.Name ?? obj.Title.ToSafetyString().Split('-')[2];
                 entity.CommentID = obj.CommentID;
-                entity.Link = obj.Link;
                 entity.SubmitDate = obj.SubmitDate.ToDateTime();
                 entity.Deadline = obj.Deadline.ToDateTime();
-                entity.CreateTime = DateTime.Now;
-                //entity.UpdateSheduleDate = DateTime.MinValue;
 
+                //+) Gắn thêm link để chuyển đến trang Chartperiod sau đó hiện model
+                if (!obj.Link.Contains("title"))
+                {
+                    entity.Link = obj.Link + "&type=task&comID=" + obj.CommentID + "&dataID=" + obj.DataID + "&title=" + title;
+                }
+                else
+                {
+                    if (obj.Link.Contains("remark"))
+                        entity.Link = obj.Link.Replace("remark", "task");
+                    else
+                        entity.Link = obj.Link;
+
+                }
+                //+) Khai báo biến
                 var user = _dbContext.Users;
+                var listAuditor = new List<ActionPlanDetail>();
                 var listEmail = new List<string[]>();
+                var listEmailsForAuditor = new List<string[]>();
+
                 var listUserID = new List<int>();
                 var listFullNameTag = new List<string>();
                 var listTags = new List<Tag>();
                 var itemTag = _dbContext.Tags;
+                var listNotificationDetail = new List<NotificationDetail>();
+
+                var listUserForAuditor = new List<UserViewModel>();
+                var listUserForPIC = new List<UserViewModel>();
 
                 try
                 {
+                    entity.Description = obj.Description;
 
-                    if (!entity.Description.IsNullOrEmpty())
-                    {
-                        if (entity.Description.IndexOf(";") == -1)
-                        {
-                            entity.Description = entity.Description;
-
-                        }
-                        else
-                        {
-                            var des = string.Empty;
-                            entity.Description.Split(';').ToList().ForEach(line =>
-                            {
-                                des += line + "&#13;&#10;";
-                            });
-                            entity.Description = des;
-                        }
-                    }
-                    else
-                    {
-                        entity.Description = "#N/A";
-                    }
-                    if (!auditor.IsNullOrEmpty())
-                    {
-                        var userResult = await _dbContext.Users.FirstOrDefaultAsync(x => x.Username == auditor);
-                        entity.Auditor = userResult.ID;
-                    }
-
+                    //Bước 2: Thêm mới ActionPlan (Task)
                     _dbContext.ActionPlans.Add(entity);
                     await _dbContext.SaveChangesAsync();
 
+                    //Bước 3: Thông báo đến user đc chỉ định làm Auditor và PIC trong Task
+                    if (!auditor.IsNullOrEmpty())
+                    {
+                        //Nếu chỉ có 1 auditor
+                        //Thêm vào bảng ActionPkanDetail
+                        if (auditor.IndexOf(",") == -1)
+                        {
+                            var userResult = await _dbContext.Users.FirstOrDefaultAsync(x => x.Username == auditor);
+                            listUserForAuditor.Add(new UserViewModel { ID = userResult.ID, Email = userResult.Email });
+
+                            entity.Auditor = userResult.ID;
+
+                            _dbContext.ActionPlanDetails.Add(new ActionPlanDetail
+                            {
+                                ActionPlanID = entity.ID,
+                                UserID = userResult.ID
+
+                            });
+                            await _dbContext.SaveChangesAsync();
+                            //Thêm vào list Email để gửi mail
+
+                            listFullNameTag.Add(userResult.FullName);
+                            listEmailsForAuditor.Add(new string[5] {
+                                user.FirstOrDefault(x => x.ID == entity.UserID).FullName,
+                                userResult.Email,
+                                entity.Link,
+                                entity.Title,
+                                entity.Description
+                            });
+                        }
+                        else//add nhiều auditor
+                        {
+                            var list = auditor.Split(',');
+                            var listUsers = await _dbContext.Users.Where(x => list.Contains(x.Username))
+                                .ToListAsync();
+                            foreach (var item in listUsers)
+                            {
+                                listUserForAuditor.Add(new UserViewModel { ID = item.ID, Email = item.Email });
+                                listAuditor.Add(new ActionPlanDetail
+                                {
+                                    ActionPlanID = entity.ID,
+                                    UserID = item.ID
+
+                                });
+                                listEmailsForAuditor.Add(new string[5] {
+                                    user.FirstOrDefault(x => x.ID == entity.UserID).FullName,
+                                    item.Email,
+                                    entity.Link,
+                                    entity.Title,
+                                    entity.Description
+                                });
+                                listFullNameTag.Add(item.FullName);
+                            }
+
+                            _dbContext.ActionPlanDetails.AddRange(listAuditor);
+                            await _dbContext.SaveChangesAsync();
+                        }
+                    }
+                    //Kiểm tra Tag (PIC)
                     if (!entity.Tag.IsNullOrEmpty())
                     {
-                        string[] arrayString = new string[5];
 
 
                         if (entity.Tag.IndexOf(",") == -1)
                         {
                             var userItem = await user.FirstOrDefaultAsync(x => x.Username == entity.Tag);
+                            listUserForPIC.Add(new UserViewModel { ID = userItem.ID, Email = userItem.Email });
 
                             if (userItem != null)
                             {
-                                var tag = new Tag();
-                                tag.ActionPlanID = entity.ID;
-                                tag.UserID = userItem.ID;
-                                _dbContext.Tags.Add(tag);
+                                _dbContext.Tags.Add(new Tag { ActionPlanID = entity.ID, UserID = userItem.ID });
                                 await _dbContext.SaveChangesAsync();
 
-                                arrayString[0] = user.FirstOrDefault(x => x.ID == entity.UserID).FullName;
-                                arrayString[1] = userItem.Email;
-                                arrayString[2] = entity.Link;
-                                arrayString[3] = entity.Title;
-                                arrayString[4] = entity.Description;
+                                //Thêm vào list Email để gửi mail
+                                listEmail.Add(new string[5] {
+                                    user.FirstOrDefault(x => x.ID == entity.UserID).FullName,
+                                    userItem.Email,
+                                    entity.Link,
+                                    entity.Title,
+                                    entity.Description
+                                });
                                 listFullNameTag.Add(userItem.FullName);
-                                listEmail.Add(arrayString);
                             }
                         }
                         else
@@ -154,44 +210,85 @@ namespace Service.Implementation
                             var listUsers = await _dbContext.Users.Where(x => list.Contains(x.Username)).ToListAsync();
                             foreach (var item in listUsers)
                             {
-                                var tag = new Tag();
-                                tag.ActionPlanID = entity.ID;
-                                tag.UserID = item.ID;
-                                listTags.Add(tag);
+                                listUserForPIC.Add(new UserViewModel { ID = item.ID, Email = item.Email });
+                                listTags.Add(new Tag { ActionPlanID = entity.ID, UserID = item.ID });
 
-                                arrayString[0] = user.FirstOrDefault(x => x.ID == entity.UserID).FullName;
-                                arrayString[1] = item.Email;
-                                arrayString[2] = entity.Link;
-                                arrayString[3] = entity.Title;
-                                arrayString[4] = entity.Description;
+                                //Thêm vào list Email để gửi mail
+                                listEmail.Add(new string[5] {
+                                    user.FirstOrDefault(x => x.ID == entity.UserID).FullName,
+                                    item.Email,
+                                    entity.Link,
+                                    entity.Title,
+                                    entity.Description
+                                });
                                 listFullNameTag.Add(item.FullName);
-                                listEmail.Add(arrayString);
                             }
+                            //Lưu db
                             _dbContext.Tags.AddRange(listTags);
                             await _dbContext.SaveChangesAsync();
                         }
                     }
 
+                    //BƯớc 4: Thêm mới Notification
 
-                    //Add vao Notification
-                    var notify = new Notification();
-                    notify.ActionplanID = entity.ID;
-                    notify.Content = entity.Description;
-                    notify.UserID = entity.UserID;
-                    //notify.Title = entity.Title;
-                    notify.Link = entity.Link;
-                    notify.Tag = string.Join(",", listFullNameTag);
-                    notify.Title = subject;
-                    notify.Action = "Task";
-                    notify.TaskName = entity.Title;
+                    var notifyAuditor = await CreateNotification(new Notification
+                    {
+                        ActionplanID = entity.ID,
+                        Content = entity.Description,
+                        UserID = entity.UserID,
+                        KPIName = entity.Name,
+                        Link = entity.Link,
+                        Tag = string.Join(",", listFullNameTag),
+                        Title = subject,
+                        Action = "Task-Auditor",
+                        TaskName = entity.Title
+                    });
 
-                    await _notificationService.Add(notify);
+                    var notifyPIC = await CreateNotification(new Notification
+                    {
+                        ActionplanID = entity.ID,
+                        Content = entity.Description,
+                        UserID = entity.UserID,
+                        KPIName = entity.Name,
+                        Link = entity.Link,
+                        Tag = string.Join(",", listFullNameTag),
+                        Title = subject,
+                        Action = "Task",
+                        TaskName = entity.Title
+                    });
+                    foreach (var item in listUserForPIC)
+                    {
+                        //Thêm vào chi tiết thông báo
+                        listNotificationDetail.Add(new NotificationDetail
+                        {
+                            UserID = item.ID,
+                            Seen = false,
+                            URL = notifyPIC.Link,
+                            NotificationID = notifyPIC.ID
+                        });
 
-                    //add vao user
+                    }
+                    foreach (var item in listUserForAuditor)
+                    {
+                        //Thêm vào chi tiết thông báo
+                        listNotificationDetail.Add(new NotificationDetail
+                        {
+                            UserID = item.ID,
+                            Seen = false,
+                            URL = notifyAuditor.Link,
+                            NotificationID = notifyAuditor.ID
+                        });
+
+                    }
+                    //Lưu Db
+                    _dbContext.NotificationDetails.AddRange(listNotificationDetail);
+                    await _dbContext.SaveChangesAsync();
                     return new CommentForReturnViewModel
                     {
                         Status = true,
-                        ListEmails = listEmail
+                        ListEmails = listEmail,
+                        ListEmailsForAuditor = listEmailsForAuditor,
+                        QueryString = entity.Link
                     };
                 }
                 catch (Exception ex)
@@ -204,39 +301,46 @@ namespace Service.Implementation
                     };
                 }
             }
-        }
 
+
+        }
+  
         public Task<bool> Add(ActionPlan entity)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<Tuple<List<string[]>, bool>> Approve(int id, int approveby, string KPILevelCode, int CategoryID)
+        public async Task<Tuple<List<string[]>, bool,string>> Approve(int id, int approveby, string KPILevelCode, int CategoryID)
         {
             var listTags = new List<Tag>();
             var listEmail = new List<string[]>();
+            var listuserChecking = new List<int>();
+
             var user = _dbContext.Users;
             var model = await _dbContext.ActionPlans.FirstOrDefaultAsync(x => x.ID == id);
+            var userTags = _dbContext.Tags.Where(x => x.ActionPlanID == model.ID).Select(x => x.UserID);
+            var userAuditors = _dbContext.Tags.Where(x => x.ActionPlanID == model.ID).Select(x => x.UserID);
+            var listDetails = new List<NotificationDetail>();
+            listuserChecking.Add(model.UserID);
+            listuserChecking.AddRange(userAuditors);
+
+            //Kiểm tra nếu là người tạo hoặc auditor thì mới dc aprove
+            if (!listuserChecking.Contains(approveby))
+            {
+                return Tuple.Create(new List<string[]>(), false, "");
+            }
             model.ApprovedBy = approveby;
             model.ApprovedStatus = !model.ApprovedStatus;
-            if (model.ApprovedStatus == true)
-                model.Status = true;
-            else
-                model.Status = false;
-
             try
             {
-
-
-                //_dbContext.Tags.AddRange(listTags);
                 await _dbContext.SaveChangesAsync();
                 //Add vao Notification
-                var tags = await _dbContext.Tags.Where(x => x.ActionPlanID == model.ID).ToListAsync();
-                foreach (var tag in tags)
+                //Bước 1: Tìm tất cả user đã được tag khi tạo actionPlan de gui mail
+                foreach (var tag in userTags)
                 {
                     string[] arrayString = new string[5];
                     arrayString[0] = user.Find(approveby).Alias; //Bi danh
-                    arrayString[1] = user.Find(tag.UserID).Email;
+                    arrayString[1] = user.Find(tag).Email;
                     arrayString[2] = "Approve Task";
                     arrayString[3] = model.Title;
                     listEmail.Add(arrayString);
@@ -247,6 +351,7 @@ namespace Service.Implementation
                 notify.UserID = approveby; //Nguoi xet duyet
                 notify.Title = model.Title;
                 notify.Link = model.Link;
+                notify.KPIName = model.Name ?? model.Title.ToSafetyString().Split('-')[2];
                 notify.TaskName = model.Title;
 
                 if (model.Status == false && model.ApprovedStatus == false)
@@ -257,17 +362,27 @@ namespace Service.Implementation
                 {
                     notify.Action = "Approval";
                 }
-
-                await _notificationService.Add(notify);
-                return Tuple.Create(listEmail, true);
+                //Add vao Notification
+                var notify2 = await CreateNotification(notify);
+                foreach (var item in userTags)
+                {
+                    listDetails.Add(new NotificationDetail
+                    {
+                        UserID = item,
+                        Seen = false,
+                        URL = notify2.Link,
+                        NotificationID = notify2.ID
+                    });
+                }
+                _dbContext.NotificationDetails.AddRange(listDetails);
+                await _dbContext.SaveChangesAsync();
+                return Tuple.Create(listEmail, true, model.Link);
             }
             catch (Exception ex)
             {
-                var a = new ErrorMessage();
-                a.Name = ex.Message;
-                a.Function = "Approval";
-                await _errorService.Add(a);
-                return Tuple.Create(new List<string[]>(), true);
+                //logger
+                await _errorService.Add(new ErrorMessage { Name = ex.Message, Function = "Approval" });
+                return Tuple.Create(new List<string[]>(), true, "");
             }
         }
 
@@ -446,10 +561,22 @@ namespace Service.Implementation
                 return false;
             }
         }
-        public async Task<Tuple<List<string[]>, bool>> Done(int id, int userid, string KPILevelCode, int CategoryID)
+        private async Task<Notification> CreateNotification(Notification entity)
+        {
+            await _dbContext.Notifications.AddAsync(entity);
+            await _dbContext.SaveChangesAsync();
+            return entity;
+        }
+        public async Task<Tuple<List<string[]>, bool,string>> Done(int id, int userid, string KPILevelCode, int CategoryID)
         {
             var listTags = new List<Tag>();
             var model = await _dbContext.ActionPlans.FindAsync(id);
+            var userTags = _dbContext.Tags.Where(x => x.ActionPlanID == model.ID).Select(x => x.UserID);
+            if (!userTags.Contains(userid))
+            {
+                return Tuple.Create(new List<string[]>(), false, "");
+            }
+            var listDetails = new List<NotificationDetail>();
             var listEmail = new List<string[]>();
             var user = _dbContext.Users;
             //Chua duyet thi moi cho update lai status
@@ -466,22 +593,22 @@ namespace Service.Implementation
                     model.ActualFinishDate = DateTime.Now;
 
                 }
-                //B2: Thong bao den owner
+                //B2: Thong bao den owner va auditor khi hoan thanh
                 var kpiLevel = _dbContext.KPILevels.FirstOrDefault(x => x.KPILevelCode == KPILevelCode);
                 var owners = await _dbContext.Owners.Where(x => x.CategoryID == CategoryID && x.KPILevelID == kpiLevel.ID).ToListAsync();
+                var auditors = await _dbContext.ActionPlanDetails.Where(x => x.ActionPlanID == model.ID).ToListAsync();
+                auditors.ForEach(item =>
+                {
+                    listTags.Add(new Tag { UserID = item.UserID, ActionPlanID = model.ID });
+                });
                 owners.ForEach(item =>
                 {
-                    var tag = new Tag();
-                    tag.UserID = item.UserID;
-                    tag.ActionPlanID = model.ID;
-                    listTags.Add(tag);
-
-
+                    listTags.Add(new Tag { UserID = item.UserID, ActionPlanID = model.ID });
                 });
 
                 try
                 {
-                    _dbContext.Tags.AddRange(listTags);
+                    //_dbContext.Tags.AddRange(listTags);
                     var tags = await _dbContext.Tags.Where(x => x.ActionPlanID == model.ID).ToListAsync();
                     foreach (var tag in tags)
                     {
@@ -494,29 +621,43 @@ namespace Service.Implementation
                     }
                     await _dbContext.SaveChangesAsync();
                     //Add vao Notification
-                    var notify = new Notification();
-                    notify.ActionplanID = model.ID;
-                    notify.Content = model.Description;
-                    notify.UserID = userid;//Nguoi update Status task
-                    notify.Title = model.Title;
-                    notify.Link = model.Link;
-                    notify.TaskName = model.Title;
-                    notify.Action = "Done";
-                    await _notificationService.Add(notify);
-                    return Tuple.Create(listEmail, true);
+                    var notify = await CreateNotification(new Notification
+                    {
+                        ActionplanID = model.ID,
+                        Content = model.Description,
+                        UserID = userid,//Nguoi update Status task
+                        Title = model.Title,
+                        Link = model.Link,
+                        KPIName = model.Name ?? model.Title.ToSafetyString().Split('-')[2],
+                        TaskName = model.Title,
+                        Action = "Done"
+                    });
+
+                    foreach (var item in listTags)
+                    {
+                        listDetails.Add(new NotificationDetail
+                        {
+                            UserID = item.UserID,
+                            Seen = false,
+                            URL = notify.Link,
+                            NotificationID = notify.ID
+                        });
+                    }
+                    _dbContext.NotificationDetails.AddRange(listDetails);
+                    await _dbContext.SaveChangesAsync();
+
+                    return Tuple.Create(listEmail, true, model.Link);
                 }
                 catch (Exception ex)
                 {
-                    var a = new ErrorMessage();
-                    a.Name = ex.Message;
-                    a.Function = "Done";
-                    await _errorService.Add(a);
-                    return Tuple.Create(new List<string[]>(), false);
+                    //logger
+                   await _errorService.Add(new ErrorMessage { Name = ex.Message, Function = "Done" });
+                    return Tuple.Create(new List<string[]>(), false, "");
                 }
             }
             else
             {
-                return Tuple.Create(new List<string[]>(), false);
+                return Tuple.Create(new List<string[]>(), false, "");
             }
         }
 
@@ -883,19 +1024,24 @@ namespace Service.Implementation
         }
         public Tuple<List<object[]>, List<UserViewModel>> CheckDeadline()
         {
+            #region 0) Biến toàn cục
+
             var listSendMail = new List<object[]>();
-            var currentDate = DateTime.Now;
-            var timeSpan = new TimeSpan(24, 00, 00);
-            var date = currentDate - timeSpan;
-            var listAc = new List<ActionPlanForCheck>();
+            var timeSpan = new TimeSpan(00, 00, 00, 00);
+            var timeSpanOfDay = new TimeSpan(24, 00, 00, 00);
+
+            var date = DateTime.Now.Date.Add(timeSpan);
             var listAcID = new List<int>();
+            var count = 0;
+
+            #endregion
+
+            //Lấy danh sách action Plan chưa hoàn thành và chưa được owner duyệt
             var model = _dbContext.ActionPlans.Where(x => x.Status == false && x.ApprovedStatus == false).ToList();
             foreach (var item in model)
-            {
                 listAcID.Add(item.ID);
 
-            }
-
+            //Lấy ra danh sách user được tag trong danh sách actionplan ở trên
             var listUser = (from a in _dbContext.Tags.Where(x => listAcID.Contains(x.ActionPlanID))
                             join c in _dbContext.Users on a.UserID equals c.ID
                             select new UserViewModel
@@ -904,41 +1050,259 @@ namespace Service.Implementation
                                 Email = c.Email
                             }).ToList();
 
-            var count = 0;
-
-
+            //Lap danh sach action Plan chưa hoàn thành và chưa được owner duyệt, 
+            //So sanh deadline nếu deadline trễ hơn ngày hiện tại thì thông báo đẩy, gủi mail
             foreach (var item in model)
             {
-                //< 0 date nho hon deadline, > 0 date lon hon deadline
-                //deadline "11/06/2019" date "11/07/2019"
+                var kpilevelModel = _dbContext.KPILevels.FirstOrDefault(x => x.KPILevelCode == item.KPILevelCode);
+                var ocName = string.Empty;
+                var kpiname = string.Empty;
+                if (kpilevelModel != null)
+                {
+                    var oc = _dbContext.Levels.FirstOrDefault(x => x.ID == kpilevelModel.LevelID);
+                    kpiname = _dbContext.KPIs.FirstOrDefault(x => x.ID == kpilevelModel.KPIID).Name;
+                    ocName = _levelService.GetNode(oc.ID);
+                }
+                //Cong them 1 ngay nua de so sanh
+                var deadline = item.Deadline.AddDays(1).Date.Add(timeSpan);
+
+                //< 0 trễ deadline,
                 if (DateTime.Compare(item.Deadline, date) < 0)
                 {
+                    var name = Regex.Replace(item.Name.Split('-')[0].ToSafetyString(), @"\s+", "-");
+
                     count++;
                     var itemSendMail = new object[] {
                         item.Title,
-                        item.Deadline,
+                        item.Deadline.ToString("dddd, dd MMMM yyyy"),
+                        item.Link+ "&type=task&comID="+item.CommentID+"&dataID="+ item.DataID+"&title=" + name,
+                        ocName,
+                        kpiname
                     };
                     listSendMail.Add(itemSendMail);
                 }
             }
             if (count > 0)
             {
-                foreach (var item in listSendMail)
-                {
-                    var itemAc = new ActionPlanForCheck();
-                    itemAc.UserID = 1;
-                    itemAc.Deadline = Convert.ToDateTime(item[1]);
-                    itemAc.Email = (string)item[0];
-                    listAc.Add(itemAc);
-                }
+                //Luu vao thong bao
+                var notificationDetails = new List<NotificationDetail>();
                 var notify = new Notification();
                 notify.Action = "LateOnTask";
                 notify.UserID = 1;
                 _dbContext.Notifications.Add(notify);
                 _dbContext.SaveChanges();
-                CreateTagOwnerAndUpdater(listUser, notify.ID);
+
+                foreach (var item in listUser)
+                {
+                    notificationDetails.Add(new NotificationDetail { NotificationID = notify.ID, UserID = item.ID, Seen = false });
+
+                }
+                _dbContext.NotificationDetails.AddRange(notificationDetails);
+                _dbContext.SaveChanges();
             }
             return Tuple.Create(listSendMail, listUser);
+        }
+
+        public bool CheckExistsData(string code, string period)
+        {
+            var currentYear = DateTime.Now.Year;
+            var currentWeek = DateTime.Now.GetIso8601WeekOfYear();
+            var currentMonth = DateTime.Now.Month;
+            var currentQuarter = DateTime.Now.GetQuarter();
+            //Kiem tra period hien tai trong bang data
+            switch (period)
+            {
+                case "W":
+                    var W = _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == code && x.Period == period && x.Week == currentWeek)?.Value;
+
+                    if (W == null || W == "" || W == "0")
+                        return true;
+                    return false;
+                case "M":
+                    var M = _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == code && x.Period == period && x.Month == currentMonth)?.Value;
+
+                    if (M == null || M == "" || M == "0")
+                        return true;
+                    return false;
+                case "Q":
+                    var Q = _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == code && x.Period == period && x.Quarter == currentQuarter)?.Value;
+
+                    if (Q == null || Q == "" || Q == "0")
+                        return true;
+                    return false;
+                case "Y":
+                    var Y = _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == code && x.Period == period && x.Year == currentYear)?.Value;
+
+                    if (Y == null || Y == "" || Y == "0")
+                        return true;
+                    return false;
+            }
+            return false;
+
+        }
+        public Tuple<List<object[]>, List<UserViewModel>> CheckLateOnUpdateData(int userid)
+        {
+            #region 0) Biến toàn cục
+
+            var listSendMail = new List<object[]>();
+            var listSendMailDetail = new List<string[]>();
+            var listNotify = new List<Notification>();
+            var listNotifyDetail = new List<NotificationDetail>();
+            var listTag = new List<Tag>();
+            var dayOfWeek = DateTime.Today.DayOfWeek.ToSafetyString().ToUpper().ConvertStringDayOfWeekToNumber();
+            var count = 0;
+            #endregion
+
+            #region 1) Lấy dữ liệu
+            var model2 = (from cat in _dbContext.CategoryKPILevels
+                          join kpilevel in _dbContext.KPILevels on cat.KPILevelID equals kpilevel.ID
+                          join kpi in _dbContext.KPIs on kpilevel.KPIID equals kpi.ID
+                          join level in _dbContext.Levels on kpilevel.LevelID equals level.ID
+                          where kpilevel.Checked == true && cat.Status == true
+                          select new ListCheckTaskViewModel
+                          {
+                              ID = kpilevel.ID,
+                              Title = kpi.Name,
+                              Area = level.Name,
+                              KPILevelCode = kpilevel.KPILevelCode,
+                              Weekly = kpilevel.Weekly ?? 1,
+                              Monthly = kpilevel.Monthly ?? DateTime.MinValue,
+                              Quarterly = kpilevel.Quarterly ?? DateTime.MinValue,
+                              Yearly = kpilevel.Yearly ?? DateTime.MinValue,
+                              WeeklyChecked = kpilevel.WeeklyChecked ?? false,
+                              MonthlyChecked = kpilevel.MonthlyChecked ?? false,
+                              QuarterlyChecked = kpilevel.QuarterlyChecked ?? false,
+                              YearlyChecked = kpilevel.YearlyChecked ?? false,
+                              UpdateDataStatusW = _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == kpilevel.KPILevelCode && x.Period == (kpilevel.WeeklyChecked == true ? "W" : "")) != null ? true : false,
+                              UpdateDataStatusM = _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == kpilevel.KPILevelCode && x.Period == (kpilevel.MonthlyChecked == true ? "M" : "")) != null ? true : false,
+                              UpdateDataStatusQ = _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == kpilevel.KPILevelCode && x.Period == (kpilevel.QuarterlyChecked == true ? "Q" : "")) != null ? true : false,
+                              UpdateDataStatusY = _dbContext.Datas.FirstOrDefault(x => x.KPILevelCode == kpilevel.KPILevelCode && x.Period == (kpilevel.YearlyChecked == true ? "Y" : "")) != null ? true : false
+                          }).ToList();
+            #endregion
+
+            #region 2) Lấy tất cả uploader và owner theo danh sách vừa lấy ở trên
+            var uploaders = (from a in model2
+                             join uploader in _dbContext.Uploaders on a.ID equals uploader.KPILevelID
+                             join user in _dbContext.Users on uploader.UserID equals user.ID
+                             select new UserViewModel
+                             {
+                                 ID = user.ID,
+                                 Email = user.Email
+                             }).ToList();
+            var owners = (from a in model2
+                          join owner in _dbContext.Owners on a.ID equals owner.KPILevelID
+                          join user in _dbContext.Users on owner.UserID equals user.ID
+                          select new UserViewModel
+                          {
+                              ID = user.ID,
+                              Email = user.Email
+                          }).ToList();
+
+            var listEmails = uploaders.Concat(owners).DistinctBy(x => x.ID);
+            #endregion
+
+            #region 3) Lọc Dữ liệu để gửi mail
+            foreach (var item in model2)
+            {
+                var oc = _levelService.GetNode(item.KPILevelCode);
+                var time = new TimeSpan(00, 00, 00, 00);
+
+                int month = DateTime.Compare(DateTime.Today.Add(new TimeSpan(00, 00, 00, 00)), item.Monthly);
+                int quarter = DateTime.Compare(DateTime.Today.Add(new TimeSpan(00, 00, 00, 00)), item.Quarterly);
+                int year = DateTime.Compare(DateTime.Today.Add(new TimeSpan(00, 00, 00, 00)), item.Yearly);
+                //less than zero if ToDay is earlier than item.yearly 
+                //greater than zero if ToDay is later than item.yearly
+
+                if (month > 0 || quarter > 0 || year > 0 || item.Weekly > dayOfWeek)
+                {
+                    count++;
+                    if (item.Weekly >= dayOfWeek && item.Weekly != 1 && item.UpdateDataStatusW == true && item.WeeklyChecked == true)
+                    {
+                        if (CheckExistsData(item.KPILevelCode, "W"))
+                        {
+                            var itemSendMail = new object[] {
+                                item.Title, item.Weekly.ConvertNumberDayOfWeekToString().ToString(),item.KPILevelCode,oc,"Weekly "
+                            };
+                            listSendMail.Add(itemSendMail);
+                        }
+                    }
+                    if (month >= 0 && item.Monthly != DateTime.MinValue && item.UpdateDataStatusM == true && item.MonthlyChecked == true)
+                    {
+                        //Kiem tra period hien tai trong bang data
+                        if (CheckExistsData(item.KPILevelCode, "M"))
+                        {
+                            var itemSendMail = new object[] {
+                                item.Title,item.Monthly.ToString("dddd, dd MMMM yyyy"),item.KPILevelCode,oc,"Monthly"
+                            };
+                            listSendMail.Add(itemSendMail);
+                        }
+
+                    }
+                    if (quarter >= 0 && item.Quarterly != DateTime.MinValue && item.UpdateDataStatusQ == true && item.QuarterlyChecked == true)
+                    {
+                        if (CheckExistsData(item.KPILevelCode, "Q"))
+                        {
+                            var itemSendMail = new object[] {
+                                item.Title,item.Quarterly.ToString("dddd, dd MMMM yyyy"),item.KPILevelCode,oc,"Quarterly"
+                            };
+                            listSendMail.Add(itemSendMail);
+                        }
+                    }
+                    if (year >= 0 && item.Yearly != DateTime.MinValue && item.UpdateDataStatusY == true && item.YearlyChecked == true)
+                    {
+                        if (CheckExistsData(item.KPILevelCode, "Y"))
+                        {
+                            var itemSendMail = new object[] {
+                                item.Title,item.Yearly.ToString("dddd, dd MMMM yyyy"),item.KPILevelCode,oc,"Yearly"
+                            };
+                            listSendMail.Add(itemSendMail);
+                        }
+                    }
+                }
+            }
+            #endregion
+
+            #region 4) Nếu có dữ liệu gửi mail thì lưu vào bảng tag để thông báo đẩy 
+            if (listSendMail.Count > 0)
+            {
+                var notify = new Notification();
+                notify.Action = "LateOnUploadData";
+                notify.UserID = 1;
+                _dbContext.Notifications.Add(notify);
+                _dbContext.SaveChanges();
+                var listLateOnUploads = new List<LateOnUpLoad>();
+
+                foreach (var it in listEmails)
+                {
+                    listNotifyDetail.Add(new NotificationDetail
+                    {
+                        NotificationID = notify.ID,
+                        Seen = false,
+                        UserID = it.ID,
+                    });
+
+                    listSendMail.ForEach(x =>
+                    {
+                        listLateOnUploads.Add(new LateOnUpLoad
+                        {
+                            KPIName = x[0].ToString(),
+                            Area = x[3].ToString(),
+                            Code = x[2].ToString(),
+                            Year = x[4].ToString(),
+                            DeadLine = x[1].ToString(),
+                            UserID = it.ID,
+                            NotificationID = notify.ID
+
+                        });
+                    });
+                }
+                _dbContext.NotificationDetails.AddRange(listNotifyDetail);
+                _dbContext.SaveChanges();
+                _dataService.AddLateOnUploadAsync(listLateOnUploads).Wait();
+            }
+            #endregion
+
+            return Tuple.Create(listSendMail, listEmails.ToList());
         }
     }
 }

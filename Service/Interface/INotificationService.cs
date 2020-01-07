@@ -16,6 +16,7 @@ namespace Service.Interface
     {
         Task<bool> UpdateRange(string listID);
         Task<object> Update(int ID);
+        
         Task<List<NotificationViewModel>> ListNotifications(int userid);
         Task<bool> IsSend();
         Task<bool> AddSendMail(StateSendMail stateSendMail);

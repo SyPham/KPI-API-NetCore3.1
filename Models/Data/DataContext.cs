@@ -40,6 +40,8 @@ namespace Models.Data
         public DbSet<OCCategory> OCCategories { get; set; }
         public DbSet<Participant> Participants { get; set; }
         public DbSet<StateSendMail> StateSendMails { get; set; }
+        public DbSet<LateOnUpLoad> LateOnUpLoads { get; set; }
+
         public DbSet<Setting> Settings { get; set; }
         public DbSet<MenuLang> MenuLangs { get; set; }
         public DbSet<MenuRole> MenuRoles { get; set; }

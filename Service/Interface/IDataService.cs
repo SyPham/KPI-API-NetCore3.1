@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Service.Helpers;
+using Models.ViewModels.ActionPlan;
 
 namespace Service.Interface
 {
@@ -34,6 +35,10 @@ namespace Service.Interface
         Task<ImportDataViewModel> ImportData(List<UploadDataViewModel> entity, string userUpdate, int userId);
         Task<object> KPIRelated(int levelId, int page, int pageSize);
         Task<object> UpLoadKPILevelTrack(int userid, int page, int pageSize);
+        Task AddLateOnUploadAsync(List<LateOnUpLoad> lateOnUpLoads);
+
+        PagedList<LateOnUpLoad> LateOnUpLoads(int userId, int notificationId,int? page, int? pageSize);
+        Task<PagedList<ActionPlanTagViewModel>> ListTasks(string code, int? page, int? pageSize);
     }
  
 }
