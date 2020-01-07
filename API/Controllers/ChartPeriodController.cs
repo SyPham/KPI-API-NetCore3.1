@@ -162,10 +162,10 @@ namespace API.Controllers
                 {
                     await _mailHelper.SendEmailRange(data.ListEmails.Select(x => x[1]).ToList(), "[KPI System-03] Action Plan (Add Task - Assign Auditor)", contentAuditor);
                 });
-                Thread thread2= new Thread(async () =>
-                {
-                    await _mailHelper.SendEmailRange(data.ListEmails.Select(x => x[1]).ToList(), "[KPI System-03] Action Plan (Add Task)", contentForPIC);
-                });
+                Thread thread2 = new Thread(async () =>
+                 {
+                     await _mailHelper.SendEmailRange(data.ListEmails.Select(x => x[1]).ToList(), "[KPI System-03] Action Plan (Add Task)", contentForPIC);
+                 });
                 thread.Start();
                 thread2.Start();
 
@@ -181,7 +181,7 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> DeleteComment(int id)
+        public async Task<IActionResult> DeleteComment2(int id)
         {
             return Ok(await _commentService.Remove(id));
         }
@@ -216,7 +216,7 @@ namespace API.Controllers
                     await _mailHelper.SendEmailRange(data.Select(x => x[1]).ToList(), "[KPI System-05] Approved", content);
                 });
                 thread.Start();
-               
+
 
             }
             return Ok(new { status = model.Item2, isSendmail = true });
@@ -269,12 +269,21 @@ namespace API.Controllers
             //var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
             return Ok(await _actionPlanService.UpdateSheduleDate(obj.name, obj.value, obj.pk, obj.userid));
         }
+
+        [HttpPost("{id}")]
+        public async Task<ActionResult> DeleteComment(int id)
+        {
+            string token = Request.Headers["Authorization"];
+            var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
+            return Ok(await _commentService.DeleteComment(id, userID));
+        }
+
         [AllowAnonymous]
         [HttpPost("{code}")]
         [HttpPost("{code}/{page}/{pageSize}")]
-        public async Task<ActionResult> ListTasks(string code, int? page,int?pageSize)
+        public async Task<ActionResult> ListTasks(string code, int? page, int? pageSize)
         {
-            var pagedList =await _dataService.ListTasks(code, page, pageSize);
+            var pagedList = await _dataService.ListTasks(code, page, pageSize);
             return Ok(new
             {
                 data = pagedList,
@@ -285,6 +294,7 @@ namespace API.Controllers
                 pageSize
             });
         }
+
 
         //public async Task<IActionResult> GetAllDataByCategory(int catid, string period, int? year)
         //{

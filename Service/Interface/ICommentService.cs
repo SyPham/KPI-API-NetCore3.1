@@ -17,6 +17,7 @@ namespace Service.Interface
         Task<CommentForReturnViewModel> AddComment(AddCommentViewModel entity, int levelIDOfUserComment);
         Task<object> ListComments(int dataid, int userid);
         Task<bool> AddCommentHistory(int userid, int dataid);
+        Task<object> DeleteComment(int id, int userid);
     }
     
 }

@@ -39,6 +39,7 @@ namespace Service.Interface
 
         PagedList<LateOnUpLoad> LateOnUpLoads(int userId, int notificationId,int? page, int? pageSize);
         Task<PagedList<ActionPlanTagViewModel>> ListTasks(string code, int? page, int? pageSize);
+        Task<PagedList<NotificationDetail>> GetAllSubNotificationsByIdAsync(int notificationId, int user, int? page, int? pageSize);
     }
  
 }

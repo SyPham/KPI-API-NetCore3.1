@@ -690,6 +690,7 @@ namespace Service.Implementation
                                     join own in _dbContext.Managers on kpilevelcode.ID equals own.KPILevelID
                                     select new
                                     {
+                                        ac.ID,
                                         TaskName = ac.Title,
                                         Description = ac.Description,
                                         DuaDate = ac.Deadline,
@@ -697,6 +698,7 @@ namespace Service.Implementation
                                         ActualFinishDate = ac.ActualFinishDate,
                                         Status = ac.Status,
                                         PIC = ac.Tag,
+                                        Code = ac.KPILevelCode,
                                         Approved = ac.ApprovedStatus,
                                         KPIID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).KPIID,
                                         KPILevelID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).ID
@@ -706,14 +708,15 @@ namespace Service.Implementation
                       {
                           TaskName = x.TaskName,
                           Description = x.Description,
-                          DueDate = x.DuaDate.ToSafetyString("MM/dd/yyyy"),
-                          UpdateSheduleDate = x.UpdateSheuleDate.ToSafetyString("MM/dd/yyyy"),
-                          ActualFinishDate = x.ActualFinishDate.ToSafetyString("MM/dd/yyyy"),
+                          DueDate = x.DuaDate.ToString("dddd, dd MMMM yyyy"),
+                          UpdateSheduleDate = x.UpdateSheuleDate?.ToString("dddd, dd MMMM yyyy"),
+                          ActualFinishDate = x.ActualFinishDate?.ToString("dddd, dd MMMM yyyy"),
                           Status = x.Status,
                           PIC = x.PIC,
+                          OC = _levelService.GetNode(x.Code),
                           Approved = x.Approved,
-                          KPIName = _dbContext.KPIs.FirstOrDefault(a => a.ID == x.KPIID).Name
-
+                          KPIName = _dbContext.KPIs.FirstOrDefault(a => a.ID == x.KPIID).Name,
+                          URL = _dbContext.Notifications.FirstOrDefault(a => a.ActionplanID == x.ID)?.Link ?? "/"
                       }).ToList();
                     break;
                 case "OWN":
@@ -724,11 +727,13 @@ namespace Service.Implementation
                                     join own in _dbContext.Owners on kpilevelcode.ID equals own.KPILevelID
                                     select new
                                     {
+                                        ac.ID,
                                         TaskName = ac.Title,
                                         Description = ac.Description,
                                         DuaDate = ac.Deadline,
                                         UpdateSheuleDate = ac.UpdateSheduleDate,
                                         ActualFinishDate = ac.ActualFinishDate,
+                                        Code = ac.KPILevelCode,
                                         Status = ac.Status,
                                         PIC = ac.Tag,
                                         Approved = ac.ApprovedStatus,
@@ -740,14 +745,16 @@ namespace Service.Implementation
                      {
                          TaskName = x.TaskName,
                          Description = x.Description,
-                         DueDate = x.DuaDate.ToSafetyString("MM/dd/yyyy"),
-                         UpdateSheduleDate = x.UpdateSheuleDate.ToSafetyString("MM/dd/yyyy"),
-                         ActualFinishDate = x.ActualFinishDate.ToSafetyString("MM/dd/yyyy"),
+                         DueDate = x.DuaDate.ToString("dddd, dd MMMM yyyy"),
+                         UpdateSheduleDate = x.UpdateSheuleDate?.ToString("dddd, dd MMMM yyyy"),
+                         ActualFinishDate = x.ActualFinishDate?.ToString("dddd, dd MMMM yyyy"),
                          Status = x.Status,
                          PIC = x.PIC,
+                         OC = _levelService.GetNode(x.Code),
                          Approved = x.Approved,
                          KPIName = _dbContext.KPIs.FirstOrDefault(a => a.ID == x.KPIID).Name
-
+                         ,
+                         URL = _dbContext.Notifications.FirstOrDefault(a => a.ActionplanID == x.ID)?.Link ?? "/"
                      }).ToList();
                     break;
                 case "UPD":
@@ -758,12 +765,14 @@ namespace Service.Implementation
                                     join own in _dbContext.Uploaders on kpilevelcode.ID equals own.KPILevelID
                                     select new
                                     {
+                                        ac.ID,
                                         KPILevelCode = d.KPILevelCode,
                                         TaskName = ac.Title,
                                         Description = ac.Description,
                                         DuaDate = ac.Deadline,
                                         UpdateSheuleDate = ac.UpdateSheduleDate,
                                         ActualFinishDate = ac.ActualFinishDate,
+                                        Code = ac.KPILevelCode,
                                         Status = ac.Status,
                                         PIC = ac.Tag,
                                         Approved = ac.ApprovedStatus,
@@ -775,13 +784,15 @@ namespace Service.Implementation
                      {
                          TaskName = x.TaskName,
                          Description = x.Description,
-                         DueDate = x.DuaDate.ToSafetyString("MM/dd/yyyy"),
-                         UpdateSheduleDate = x.UpdateSheuleDate.ToSafetyString("MM/dd/yyyy"),
-                         ActualFinishDate = x.ActualFinishDate.ToSafetyString("MM/dd/yyyy"),
+                         DueDate = x.DuaDate.ToString("dddd, dd MMMM yyyy"),
+                         UpdateSheduleDate = x.UpdateSheuleDate?.ToString("dddd, dd MMMM yyyy"),
+                         ActualFinishDate = x.ActualFinishDate?.ToString("dddd, dd MMMM yyyy"),
                          Status = x.Status,
+                         OC = _levelService.GetNode(x.Code),
                          PIC = x.PIC,
                          Approved = x.Approved,
-                         KPIName = _dbContext.KPIs.FirstOrDefault(a => a.ID == x.KPIID).Name
+                         KPIName = _dbContext.KPIs.FirstOrDefault(a => a.ID == x.KPIID).Name,
+                         URL = _dbContext.Notifications.FirstOrDefault(a => a.ActionplanID == x.ID)?.Link ?? "/"
 
                      }).ToList();
                     break;
@@ -793,12 +804,14 @@ namespace Service.Implementation
                                     join own in _dbContext.Sponsors on kpilevelcode.ID equals own.KPILevelID
                                     select new
                                     {
+                                        ac.ID,
                                         TaskName = ac.Title,
                                         Description = ac.Description,
                                         DuaDate = ac.Deadline,
                                         UpdateSheuleDate = ac.UpdateSheduleDate,
                                         ActualFinishDate = ac.ActualFinishDate,
                                         Status = ac.Status,
+                                        Code = ac.KPILevelCode,
                                         PIC = ac.Tag,
                                         Approved = ac.ApprovedStatus,
                                         KPIID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).KPIID,
@@ -810,12 +823,14 @@ namespace Service.Implementation
                         TaskName = x.TaskName,
                         KPIName = _dbContext.KPIs.FirstOrDefault(a => a.ID == x.KPIID).Name,
                         Description = x.Description,
-                        DueDate = x.DuaDate.ToSafetyString("MM/dd/yyyy"),
-                        UpdateSheduleDate = x.UpdateSheuleDate.ToSafetyString("MM/dd/yyyy"),
-                        ActualFinishDate = x.ActualFinishDate.ToSafetyString("MM/dd/yyyy"),
+                        DueDate = x.DuaDate.ToString("dddd, dd MMMM yyyy"),
+                        UpdateSheduleDate = x.UpdateSheuleDate?.ToString("dddd, dd MMMM yyyy"),
+                        ActualFinishDate = x.ActualFinishDate?.ToString("dddd, dd MMMM yyyy"),
+                        OC = _levelService.GetNode(x.Code),
                         Status = x.Status,
                         PIC = x.PIC,
                         Approved = x.Approved,
+                        URL = _dbContext.Notifications.FirstOrDefault(a => a.ActionplanID == x.ID)?.Link ?? "/"
 
                     }).ToList();
                     break;
@@ -827,11 +842,13 @@ namespace Service.Implementation
                                     join own in _dbContext.Participants on kpilevelcode.ID equals own.KPILevelID
                                     select new
                                     {
+                                        ac.ID,
                                         TaskName = ac.Title,
                                         Description = ac.Description,
                                         DuaDate = ac.Deadline,
                                         UpdateSheuleDate = ac.UpdateSheduleDate,
                                         ActualFinishDate = ac.ActualFinishDate,
+                                        Code = ac.KPILevelCode,
                                         Status = ac.Status,
                                         PIC = ac.Tag,
                                         Approved = ac.ApprovedStatus,
@@ -843,13 +860,15 @@ namespace Service.Implementation
                     {
                         TaskName = x.TaskName,
                         Description = x.Description,
-                        DueDate = x.DuaDate.ToSafetyString("MM/dd/yyyy"),
-                        UpdateSheduleDate = x.UpdateSheuleDate.ToSafetyString("MM/dd/yyyy"),
-                        ActualFinishDate = x.ActualFinishDate.ToSafetyString("MM/dd/yyyy"),
+                        DueDate = x.DuaDate.ToString("dddd, dd MMMM yyyy"),
+                        UpdateSheduleDate = x.UpdateSheuleDate?.ToString("dddd, dd MMMM yyyy"),
+                        ActualFinishDate = x.ActualFinishDate?.ToString("dddd, dd MMMM yyyy"),
                         Status = x.Status,
+                        OC = _levelService.GetNode(x.Code),
                         PIC = x.PIC,
                         Approved = x.Approved,
-                        KPIName = _dbContext.KPIs.FirstOrDefault(a => a.ID == x.KPIID).Name
+                        KPIName = _dbContext.KPIs.FirstOrDefault(a => a.ID == x.KPIID).Name,
+                        URL = _dbContext.Notifications.FirstOrDefault(a => a.ActionplanID == x.ID)?.Link ?? "/"
 
                     }).ToList();
                     break;
@@ -1304,5 +1323,6 @@ namespace Service.Implementation
 
             return Tuple.Create(listSendMail, listEmails.ToList());
         }
+       
     }
 }

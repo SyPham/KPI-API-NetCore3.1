@@ -2154,7 +2154,7 @@ namespace Service.Implementation
 
             return PagedList<LateOnUpLoad>.Create(source, page ?? 1, pageSize ?? 20);
         }
-        public async Task<PagedList<ActionPlanTagViewModel>> ListTasks(string code,int? page, int? pageSize)
+        public async Task<PagedList<ActionPlanTagViewModel>> ListTasks(string code, int? page, int? pageSize)
         {
             var actionPlans = new List<ActionPlanTagViewModel>();
             var model = await _dbContext.ActionPlans.Where(x => x.KPILevelCode == code).ToListAsync();
@@ -2183,6 +2183,12 @@ namespace Service.Implementation
                 });
             }
             return PagedList<ActionPlanTagViewModel>.Create(actionPlans, page ?? 1, pageSize ?? 20);
+        }
+
+        public async Task<PagedList<NotificationDetail>> GetAllSubNotificationsByIdAsync(int notificationId, int user, int? page, int? pageSize)
+        {
+            var model = _dbContext.NotificationDetails.Where(x => x.NotificationID == notificationId && x.UserID == user);
+            return await PagedList<NotificationDetail>.CreateAsync(model, page ?? 1, pageSize ?? 20);
         }
     }
 }

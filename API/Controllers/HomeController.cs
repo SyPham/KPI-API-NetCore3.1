@@ -51,7 +51,7 @@ namespace API.Controllers
         }
 
         #region (*) Method Helper For SendMail()
-        public async Task CheckLateOnUpdate(Tuple<List<object[]>, List<UserViewModel>> auditUploadModel)
+        private async Task CheckLateOnUpdate(Tuple<List<object[]>, List<UserViewModel>> auditUploadModel)
         {
 
             if (await _settingService.IsSendMail("CHECKLATEONUPDATEDATA") && auditUploadModel.Item1.Count > 0)
@@ -89,7 +89,7 @@ namespace API.Controllers
             }
         }
 
-        public async Task CheckLateOnTask(Tuple<List<object[]>, List<UserViewModel>> model)
+        private async Task CheckLateOnTask(Tuple<List<object[]>, List<UserViewModel>> model)
         {
             if (await _settingService.IsSendMail("CHECKDEADLINE") && model.Item1.Count > 0)
             {
@@ -239,7 +239,12 @@ namespace API.Controllers
 
             return true;
         }
-
+        [HttpGet]
+        public async Task<IActionResult> CheckEmailEveryday()
+        {
+            await SendMail();
+            return Ok(200);
+        }
         [HttpGet]
         public async Task<IActionResult> GetNotifications()
         {
@@ -296,7 +301,24 @@ namespace API.Controllers
                 pageSize
             });
         }
-
+        [HttpPost("{notificationId}")]
+        [HttpPost("{notificationId}/{page}/{pageSize}")]
+        public async Task<IActionResult> ListSubNotificationDetail(int notificationId, int? page, int? pageSize)
+        {
+            string token = Request.Headers["Authorization"];
+            var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
+            var pagedList = await _dataService.GetAllSubNotificationsByIdAsync(userID, notificationId, page, pageSize);
+            return Ok(new
+            {
+                notificationId,
+                data = pagedList,
+                total = pagedList.Count,
+                pageCount = pagedList.TotalPages,
+                status = true,
+                page,
+                pageSize
+            });
+        }
     }
 }
 

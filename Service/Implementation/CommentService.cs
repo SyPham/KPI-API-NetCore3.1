@@ -399,6 +399,44 @@ namespace Service.Implementation
             };
 
         }
+        public async Task<object> DeleteComment(int id, int userid)
+        {
+            try
+            {
+                var item = await _dbContext.Comments.FirstOrDefaultAsync(x => x.ID == id && x.UserID == userid);
+
+                if (userid != item.UserID || item == null)
+                {
+                    return new
+                    {
+                        status = false,
+                        message = "You are not authorized to delete this comment!"
+                    };
+                }
+                else
+                {
+                    _dbContext.Comments.Remove(item);
+                    await _dbContext.SaveChangesAsync();
+                    return new
+                    {
+                        status = true,
+                        message = "Successfully!"
+                    };
+                }
+
+
+            }
+            catch
+            {
+
+                return new
+                {
+                    message = "You are not authorized to delete this comment!",
+                    status = false
+                };
+            }
+
+        }
 
     }
 }
