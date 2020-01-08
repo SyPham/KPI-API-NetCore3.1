@@ -9,6 +9,11 @@ namespace Models.EF
 {
     public class KPILevel
     {
+        public KPILevel()
+        {
+            CreateTime = DateTime.Now;
+        }
+
         public int ID { get; set; }
         public string KPILevelCode { get; set; }
         public string UserCheck { get; set; }
@@ -36,18 +41,8 @@ namespace Models.EF
         [Column(TypeName = "datetime")]
         public DateTime? TimeCheck { get; set; }
         [Column(TypeName = "datetime")]
-        private DateTime? createTime = null;
-        public DateTime CreateTime
-        {
-            get
-            {
-                return this.createTime.HasValue
-                   ? this.createTime.Value
-                   : DateTime.Now;
-            }
+        public DateTime CreateTime { get; set; }
 
-            set { this.createTime = value; }
-        }
         public int LevelNumber { get; set; }
         public int WeeklyStandard { get; set; }
         public int MonthlyStandard { get; set; }

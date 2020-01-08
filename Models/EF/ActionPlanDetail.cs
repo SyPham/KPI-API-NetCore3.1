@@ -17,18 +17,12 @@ namespace Models.EF
         public bool Seen { get; set; }
         [Column(TypeName = "datetime")]
 
-        private DateTime? createTime = null;
-        public DateTime CreateTime
+        public DateTime CreateTime { get; set; }
+        public ActionPlanDetail()
         {
-            get
-            {
-                return this.createTime.HasValue
-                   ? this.createTime.Value
-                   : DateTime.Now;
-            }
-
-            set { this.createTime = value; }
+            CreateTime = DateTime.Now;
         }
+
 
     }
 }

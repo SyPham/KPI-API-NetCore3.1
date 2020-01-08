@@ -74,12 +74,16 @@ namespace API.Controllers
             var levelNumberOfUserComment = Extensions.GetDecodeTokenByProperty(token, "LevelId").ToInt();
 
             var data = await _commentService.AddComment(entity, levelNumberOfUserComment);
+            
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
 
 
+            
             var tos = new List<string>();
+            
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
 
+            
             if (data.ListEmails.Count > 0 && await _settingService.IsSendMail("ADDCOMMENT"))
             {
                 var model = data.ListEmails.DistinctBy(x => x);
@@ -95,7 +99,9 @@ namespace API.Controllers
                 thread.Start();
             }
 
+            
             return Ok(new { status = data.Status, isSendmail = true });
+        
         }
         [AllowAnonymous]
         [HttpGet("{dataid}/{userid}")]

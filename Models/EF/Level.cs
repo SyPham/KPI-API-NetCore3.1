@@ -16,19 +16,13 @@ namespace Models.EF
         public string ParentCode { get; set; }
         public int? LevelNumber { get; set; }
         public bool State { get; set; }
-        [Column(TypeName = "datetime")]
-        private DateTime? createTime = null;
-        public DateTime CreateTime
+        public Level()
         {
-            get
-            {
-                return this.createTime.HasValue
-                   ? this.createTime.Value
-                   : DateTime.Now;
-            }
-
-            set { this.createTime = value; }
+            CreateTime = DateTime.Now;
         }
-      
+
+        [Column(TypeName = "datetime")]
+        public DateTime CreateTime { get; set; }
+
     }
 }

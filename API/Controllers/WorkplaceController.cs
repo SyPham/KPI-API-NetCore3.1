@@ -69,7 +69,9 @@ namespace API.Controllers
         [HttpGet("{role}/{page}/{pageSize}")]
         public async Task<IActionResult> LoadActionPlan(string role, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
-            return Ok(await _actionPlanService.LoadActionPlan(role, page, pageSize));
+            string token = Request.Headers["Authorization"];
+            var userId = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
+            return Ok(await _actionPlanService.LoadActionPlan(role, page, pageSize, userId));
         }
        [HttpGet]
        [AllowAnonymous]

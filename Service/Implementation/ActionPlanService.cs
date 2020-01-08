@@ -15,7 +15,7 @@ using System.Text.RegularExpressions;
 
 namespace Service.Implementation
 {
-   
+
     public class ActionPlanService : IActionPlanService
     {
         private readonly DataContext _dbContext;
@@ -49,6 +49,7 @@ namespace Service.Implementation
             var auditor = obj.Auditor;
             var kpilevelcode = obj.KPILevelCode;
             var catid = obj.CategoryID;
+            var flag = new bool();
             var kpilevelModel = await _dbContext.KPILevels.FirstOrDefaultAsync(x => x.KPILevelCode == kpilevelcode);
 
             if (kpilevelModel == null)
@@ -112,8 +113,10 @@ namespace Service.Implementation
                 var listUserForAuditor = new List<UserViewModel>();
                 var listUserForPIC = new List<UserViewModel>();
 
-                try
-                {
+                var listAuditors = new List<int>();
+                var listPIC = new List<int>();
+                //try
+                //{
                     entity.Description = obj.Description;
 
                     //Bước 2: Thêm mới ActionPlan (Task)
@@ -138,7 +141,9 @@ namespace Service.Implementation
                                 UserID = userResult.ID
 
                             });
-                            await _dbContext.SaveChangesAsync();
+                            //Add vao list de kiem tra PIC va Auditor
+                            listAuditors.Add(userResult.ID);
+
                             //Thêm vào list Email để gửi mail
 
                             listFullNameTag.Add(userResult.FullName);
@@ -173,9 +178,10 @@ namespace Service.Implementation
                                 });
                                 listFullNameTag.Add(item.FullName);
                             }
+                            //Add vao list de kiem tra PIC va Auditor
+                            listAuditors.AddRange(listUsers.Select(x => x.ID));
 
                             _dbContext.ActionPlanDetails.AddRange(listAuditor);
-                            await _dbContext.SaveChangesAsync();
                         }
                     }
                     //Kiểm tra Tag (PIC)
@@ -190,8 +196,10 @@ namespace Service.Implementation
 
                             if (userItem != null)
                             {
+                                //Add vao list de kiem tra PIC va Auditor
+                                listPIC.Add(userItem.ID);
+
                                 _dbContext.Tags.Add(new Tag { ActionPlanID = entity.ID, UserID = userItem.ID });
-                                await _dbContext.SaveChangesAsync();
 
                                 //Thêm vào list Email để gửi mail
                                 listEmail.Add(new string[5] {
@@ -223,66 +231,94 @@ namespace Service.Implementation
                                 });
                                 listFullNameTag.Add(item.FullName);
                             }
+                            //Add vao list de kiem tra PIC va Auditor
+                            listPIC.AddRange(listUsers.Select(x => x.ID));
                             //Lưu db
                             _dbContext.Tags.AddRange(listTags);
-                            await _dbContext.SaveChangesAsync();
                         }
                     }
 
-                    //BƯớc 4: Thêm mới Notification
+                    //Kiểm tra nếu PIC trùng với Auditor
 
-                    var notifyAuditor = await CreateNotification(new Notification
+                    foreach (var pic in listPIC)
                     {
-                        ActionplanID = entity.ID,
-                        Content = entity.Description,
-                        UserID = entity.UserID,
-                        KPIName = entity.Name,
-                        Link = entity.Link,
-                        Tag = string.Join(",", listFullNameTag),
-                        Title = subject,
-                        Action = "Task-Auditor",
-                        TaskName = entity.Title
-                    });
+                        if (listAuditors.Contains(pic))
+                            flag = true;
+                    }
 
-                    var notifyPIC = await CreateNotification(new Notification
+                    if (flag)
                     {
-                        ActionplanID = entity.ID,
-                        Content = entity.Description,
-                        UserID = entity.UserID,
-                        KPIName = entity.Name,
-                        Link = entity.Link,
-                        Tag = string.Join(",", listFullNameTag),
-                        Title = subject,
-                        Action = "Task",
-                        TaskName = entity.Title
-                    });
-                    foreach (var item in listUserForPIC)
-                    {
-                        //Thêm vào chi tiết thông báo
-                        listNotificationDetail.Add(new NotificationDetail
+                        _dbContext.ActionPlans.Remove(_dbContext.ActionPlans.Find(entity.ID));
+                        //_dbContext.ActionPlanDetails.RemoveRange(_dbContext.ActionPlanDetails.Where(x => x.ActionPlanID == entity.ID));
+                        //_dbContext.Tags.RemoveRange(_dbContext.Tags.Where(x => x.ActionPlanID == entity.ID));
+                        await _dbContext.SaveChangesAsync();
+                        return new CommentForReturnViewModel
                         {
-                            UserID = item.ID,
-                            Seen = false,
-                            URL = notifyPIC.Link,
-                            NotificationID = notifyPIC.ID
+                            Status = false,
+                            ListEmails = new List<string[]>(),
+                            Message = "Warning! PIC and Auditor can not same!",
+                        };
+                    }
+                    else
+                    {
+                        await _dbContext.SaveChangesAsync();
+
+
+                        //BƯớc 4: Thêm mới Notification
+
+                        var notifyAuditor = await CreateNotification(new Notification
+                        {
+                            ActionplanID = entity.ID,
+                            Content = entity.Description,
+                            UserID = entity.UserID,
+                            KPIName = entity.Name,
+                            Link = entity.Link,
+                            Tag = string.Join(",", listFullNameTag),
+                            Title = subject,
+                            Action = "Task-Auditor",
+                            TaskName = entity.Title
                         });
 
-                    }
-                    foreach (var item in listUserForAuditor)
-                    {
-                        //Thêm vào chi tiết thông báo
-                        listNotificationDetail.Add(new NotificationDetail
+                        var notifyPIC = await CreateNotification(new Notification
                         {
-                            UserID = item.ID,
-                            Seen = false,
-                            URL = notifyAuditor.Link,
-                            NotificationID = notifyAuditor.ID
+                            ActionplanID = entity.ID,
+                            Content = entity.Description,
+                            UserID = entity.UserID,
+                            KPIName = entity.Name,
+                            Link = entity.Link,
+                            Tag = string.Join(",", listFullNameTag),
+                            Title = subject,
+                            Action = "Task",
+                            TaskName = entity.Title
                         });
+                        foreach (var item in listUserForPIC)
+                        {
+                            //Thêm vào chi tiết thông báo
+                            listNotificationDetail.Add(new NotificationDetail
+                            {
+                                UserID = item.ID,
+                                Seen = false,
+                                URL = notifyPIC.Link,
+                                NotificationID = notifyPIC.ID
+                            });
 
+                        }
+                        foreach (var item in listUserForAuditor)
+                        {
+                            //Thêm vào chi tiết thông báo
+                            listNotificationDetail.Add(new NotificationDetail
+                            {
+                                UserID = item.ID,
+                                Seen = false,
+                                URL = notifyAuditor.Link,
+                                NotificationID = notifyAuditor.ID
+                            });
+
+                        }
+                        //Lưu Db
+                        _dbContext.NotificationDetails.AddRange(listNotificationDetail);
+                        await _dbContext.SaveChangesAsync();
                     }
-                    //Lưu Db
-                    _dbContext.NotificationDetails.AddRange(listNotificationDetail);
-                    await _dbContext.SaveChangesAsync();
                     return new CommentForReturnViewModel
                     {
                         Status = true,
@@ -290,27 +326,27 @@ namespace Service.Implementation
                         ListEmailsForAuditor = listEmailsForAuditor,
                         QueryString = entity.Link
                     };
-                }
-                catch (Exception ex)
-                {
-                    var message = ex.Message;
-                    return new CommentForReturnViewModel
-                    {
-                        Status = true,
-                        ListEmails = listEmail
-                    };
-                }
+                //}
+                //catch (Exception ex)
+                //{
+                //    var message = ex.Message;
+                //    return new CommentForReturnViewModel
+                //    {
+                //        Status = false,
+                //        ListEmails = listEmail
+                //    };
+                //}
             }
 
 
         }
-  
+
         public Task<bool> Add(ActionPlan entity)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<Tuple<List<string[]>, bool,string>> Approve(int id, int approveby, string KPILevelCode, int CategoryID)
+        public async Task<Tuple<List<string[]>, bool, string>> Approve(int id, int approveby, string KPILevelCode, int CategoryID)
         {
             var listTags = new List<Tag>();
             var listEmail = new List<string[]>();
@@ -457,14 +493,14 @@ namespace Service.Implementation
 
         public async Task<bool> Remove(int Id)
         {
-            var item =await _dbContext.ActionPlans.FindAsync(Id);
+            var item = await _dbContext.ActionPlans.FindAsync(Id);
             _dbContext.ActionPlans.Remove(item);
             try
             {
                 await _dbContext.SaveChangesAsync();
                 return true;
             }
-            catch 
+            catch
             {
 
                 return false;
@@ -567,7 +603,7 @@ namespace Service.Implementation
             await _dbContext.SaveChangesAsync();
             return entity;
         }
-        public async Task<Tuple<List<string[]>, bool,string>> Done(int id, int userid, string KPILevelCode, int CategoryID)
+        public async Task<Tuple<List<string[]>, bool, string>> Done(int id, int userid, string KPILevelCode, int CategoryID)
         {
             var listTags = new List<Tag>();
             var model = await _dbContext.ActionPlans.FindAsync(id);
@@ -651,7 +687,7 @@ namespace Service.Implementation
                 catch (Exception ex)
                 {
                     //logger
-                   await _errorService.Add(new ErrorMessage { Name = ex.Message, Function = "Done" });
+                    await _errorService.Add(new ErrorMessage { Name = ex.Message, Function = "Done" });
                     return Tuple.Create(new List<string[]>(), false, "");
                 }
             }
@@ -678,68 +714,75 @@ namespace Service.Implementation
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-        public async Task<object> LoadActionPlan(string role, int page, int pageSize)
+        public async Task<object> LoadActionPlan(string role, int page, int pageSize, int userid)
         {
             var model = new List<ActionPlanViewModel>();
             switch (role.ToSafetyString().ToUpper())
             {
                 case "MAN":
-                    model = (await (from d in _dbContext.Datas
-                                    join ac in _dbContext.ActionPlans on d.ID equals ac.DataID
-                                    join kpilevelcode in _dbContext.KPILevels on d.KPILevelCode equals kpilevelcode.KPILevelCode
-                                    join own in _dbContext.Managers on kpilevelcode.ID equals own.KPILevelID
-                                    select new
-                                    {
-                                        ac.ID,
-                                        TaskName = ac.Title,
-                                        Description = ac.Description,
-                                        DuaDate = ac.Deadline,
-                                        UpdateSheuleDate = ac.UpdateSheduleDate,
-                                        ActualFinishDate = ac.ActualFinishDate,
-                                        Status = ac.Status,
-                                        PIC = ac.Tag,
-                                        Code = ac.KPILevelCode,
-                                        Approved = ac.ApprovedStatus,
-                                        KPIID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).KPIID,
-                                        KPILevelID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).ID
-                                    }).Distinct()
-                      .ToListAsync())
-                      .Select(x => new ActionPlanViewModel
-                      {
-                          TaskName = x.TaskName,
-                          Description = x.Description,
-                          DueDate = x.DuaDate.ToString("dddd, dd MMMM yyyy"),
-                          UpdateSheduleDate = x.UpdateSheuleDate?.ToString("dddd, dd MMMM yyyy"),
-                          ActualFinishDate = x.ActualFinishDate?.ToString("dddd, dd MMMM yyyy"),
-                          Status = x.Status,
-                          PIC = x.PIC,
-                          OC = _levelService.GetNode(x.Code),
-                          Approved = x.Approved,
-                          KPIName = _dbContext.KPIs.FirstOrDefault(a => a.ID == x.KPIID).Name,
-                          URL = _dbContext.Notifications.FirstOrDefault(a => a.ActionplanID == x.ID)?.Link ?? "/"
-                      }).ToList();
-                    break;
-                case "OWN":
+                    if (_dbContext.Managers.Any(x => x.UserID.Equals(userid)))
+                    {
+                        model = (await (from d in _dbContext.Datas
+                                        join ac in _dbContext.ActionPlans on d.ID equals ac.DataID
+                                        join kpilevelcode in _dbContext.KPILevels on d.KPILevelCode equals kpilevelcode.KPILevelCode
+                                        join own in _dbContext.Managers on kpilevelcode.ID equals own.KPILevelID
+                                        select new
+                                        {
+                                            ac.ID,
+                                            TaskName = ac.Title,
+                                            Description = ac.Description,
+                                            DuaDate = ac.Deadline,
+                                            UpdateSheuleDate = ac.UpdateSheduleDate,
+                                            ActualFinishDate = ac.ActualFinishDate,
+                                            Status = ac.Status,
+                                            PIC = ac.Tag,
+                                            Code = ac.KPILevelCode,
+                                            Approved = ac.ApprovedStatus,
+                                            KPIID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).KPIID,
+                                            KPILevelID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).ID
+                                        }).Distinct()
+                     .ToListAsync())
+                     .Select(x => new ActionPlanViewModel
+                     {
+                         TaskName = x.TaskName,
+                         Description = x.Description,
+                         DueDate = x.DuaDate.ToString("dddd, dd MMMM yyyy"),
+                         UpdateSheduleDate = x.UpdateSheuleDate?.ToString("dddd, dd MMMM yyyy"),
+                         ActualFinishDate = x.ActualFinishDate?.ToString("dddd, dd MMMM yyyy"),
+                         Status = x.Status,
+                         PIC = x.PIC,
+                         OC = _levelService.GetNode(x.Code),
+                         Approved = x.Approved,
+                         KPIName = _dbContext.KPIs.FirstOrDefault(a => a.ID == x.KPIID).Name,
+                         URL = _dbContext.Notifications.FirstOrDefault(a => a.ActionplanID == x.ID)?.Link ?? "/"
+                     }).ToList();
+                        break;
 
-                    model = (await (from d in _dbContext.Datas
-                                    join ac in _dbContext.ActionPlans on d.ID equals ac.DataID
-                                    join kpilevelcode in _dbContext.KPILevels on d.KPILevelCode equals kpilevelcode.KPILevelCode
-                                    join own in _dbContext.Owners on kpilevelcode.ID equals own.KPILevelID
-                                    select new
-                                    {
-                                        ac.ID,
-                                        TaskName = ac.Title,
-                                        Description = ac.Description,
-                                        DuaDate = ac.Deadline,
-                                        UpdateSheuleDate = ac.UpdateSheduleDate,
-                                        ActualFinishDate = ac.ActualFinishDate,
-                                        Code = ac.KPILevelCode,
-                                        Status = ac.Status,
-                                        PIC = ac.Tag,
-                                        Approved = ac.ApprovedStatus,
-                                        KPIID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).KPIID,
-                                        KPILevelID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).ID
-                                    }).Distinct()
+                    }
+                    break;
+
+                case "OWN":
+                    if (_dbContext.Owners.Any(x => x.UserID.Equals(userid)))
+                    {
+                        model = (await (from d in _dbContext.Datas
+                                        join ac in _dbContext.ActionPlans on d.ID equals ac.DataID
+                                        join kpilevelcode in _dbContext.KPILevels on d.KPILevelCode equals kpilevelcode.KPILevelCode
+                                        join own in _dbContext.Owners on kpilevelcode.ID equals own.KPILevelID
+                                        select new
+                                        {
+                                            ac.ID,
+                                            TaskName = ac.Title,
+                                            Description = ac.Description,
+                                            DuaDate = ac.Deadline,
+                                            UpdateSheuleDate = ac.UpdateSheduleDate,
+                                            ActualFinishDate = ac.ActualFinishDate,
+                                            Code = ac.KPILevelCode,
+                                            Status = ac.Status,
+                                            PIC = ac.Tag,
+                                            Approved = ac.ApprovedStatus,
+                                            KPIID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).KPIID,
+                                            KPILevelID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).ID
+                                        }).Distinct()
                      .ToListAsync())
                      .Select(x => new ActionPlanViewModel
                      {
@@ -756,29 +799,32 @@ namespace Service.Implementation
                          ,
                          URL = _dbContext.Notifications.FirstOrDefault(a => a.ActionplanID == x.ID)?.Link ?? "/"
                      }).ToList();
+                        break;
+                    }
                     break;
                 case "UPD":
-
-                    model = (await (from d in _dbContext.Datas
-                                    join ac in _dbContext.ActionPlans on d.ID equals ac.DataID
-                                    join kpilevelcode in _dbContext.KPILevels on d.KPILevelCode equals kpilevelcode.KPILevelCode
-                                    join own in _dbContext.Uploaders on kpilevelcode.ID equals own.KPILevelID
-                                    select new
-                                    {
-                                        ac.ID,
-                                        KPILevelCode = d.KPILevelCode,
-                                        TaskName = ac.Title,
-                                        Description = ac.Description,
-                                        DuaDate = ac.Deadline,
-                                        UpdateSheuleDate = ac.UpdateSheduleDate,
-                                        ActualFinishDate = ac.ActualFinishDate,
-                                        Code = ac.KPILevelCode,
-                                        Status = ac.Status,
-                                        PIC = ac.Tag,
-                                        Approved = ac.ApprovedStatus,
-                                        KPIID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).KPIID,
-                                        KPILevelID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).ID
-                                    }).Distinct()
+                    if (_dbContext.Uploaders.Any(x => x.UserID.Equals(userid)))
+                    {
+                        model = (await (from d in _dbContext.Datas
+                                        join ac in _dbContext.ActionPlans on d.ID equals ac.DataID
+                                        join kpilevelcode in _dbContext.KPILevels on d.KPILevelCode equals kpilevelcode.KPILevelCode
+                                        join own in _dbContext.Uploaders on kpilevelcode.ID equals own.KPILevelID
+                                        select new
+                                        {
+                                            ac.ID,
+                                            KPILevelCode = d.KPILevelCode,
+                                            TaskName = ac.Title,
+                                            Description = ac.Description,
+                                            DuaDate = ac.Deadline,
+                                            UpdateSheuleDate = ac.UpdateSheduleDate,
+                                            ActualFinishDate = ac.ActualFinishDate,
+                                            Code = ac.KPILevelCode,
+                                            Status = ac.Status,
+                                            PIC = ac.Tag,
+                                            Approved = ac.ApprovedStatus,
+                                            KPIID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).KPIID,
+                                            KPILevelID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).ID
+                                        }).Distinct()
                      .ToListAsync())
                      .Select(x => new ActionPlanViewModel
                      {
@@ -795,28 +841,31 @@ namespace Service.Implementation
                          URL = _dbContext.Notifications.FirstOrDefault(a => a.ActionplanID == x.ID)?.Link ?? "/"
 
                      }).ToList();
+                        break;
+                    }
                     break;
                 case "SPO":
-
-                    model = (await (from d in _dbContext.Datas
-                                    join ac in _dbContext.ActionPlans on d.ID equals ac.DataID
-                                    join kpilevelcode in _dbContext.KPILevels on d.KPILevelCode equals kpilevelcode.KPILevelCode
-                                    join own in _dbContext.Sponsors on kpilevelcode.ID equals own.KPILevelID
-                                    select new
-                                    {
-                                        ac.ID,
-                                        TaskName = ac.Title,
-                                        Description = ac.Description,
-                                        DuaDate = ac.Deadline,
-                                        UpdateSheuleDate = ac.UpdateSheduleDate,
-                                        ActualFinishDate = ac.ActualFinishDate,
-                                        Status = ac.Status,
-                                        Code = ac.KPILevelCode,
-                                        PIC = ac.Tag,
-                                        Approved = ac.ApprovedStatus,
-                                        KPIID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).KPIID,
-                                        KPILevelID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).ID
-                                    }).Distinct()
+                    if (_dbContext.Sponsors.Any(x => x.UserID.Equals(userid)))
+                    {
+                        model = (await (from d in _dbContext.Datas
+                                        join ac in _dbContext.ActionPlans on d.ID equals ac.DataID
+                                        join kpilevelcode in _dbContext.KPILevels on d.KPILevelCode equals kpilevelcode.KPILevelCode
+                                        join own in _dbContext.Sponsors on kpilevelcode.ID equals own.KPILevelID
+                                        select new
+                                        {
+                                            ac.ID,
+                                            TaskName = ac.Title,
+                                            Description = ac.Description,
+                                            DuaDate = ac.Deadline,
+                                            UpdateSheuleDate = ac.UpdateSheduleDate,
+                                            ActualFinishDate = ac.ActualFinishDate,
+                                            Status = ac.Status,
+                                            Code = ac.KPILevelCode,
+                                            PIC = ac.Tag,
+                                            Approved = ac.ApprovedStatus,
+                                            KPIID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).KPIID,
+                                            KPILevelID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).ID
+                                        }).Distinct()
                     .ToListAsync())
                     .Select(x => new ActionPlanViewModel
                     {
@@ -833,28 +882,32 @@ namespace Service.Implementation
                         URL = _dbContext.Notifications.FirstOrDefault(a => a.ActionplanID == x.ID)?.Link ?? "/"
 
                     }).ToList();
+                        break;
+                    }
                     break;
+
                 case "PAR":
-
-                    model = (await (from d in _dbContext.Datas
-                                    join ac in _dbContext.ActionPlans on d.ID equals ac.DataID
-                                    join kpilevelcode in _dbContext.KPILevels on d.KPILevelCode equals kpilevelcode.KPILevelCode
-                                    join own in _dbContext.Participants on kpilevelcode.ID equals own.KPILevelID
-                                    select new
-                                    {
-                                        ac.ID,
-                                        TaskName = ac.Title,
-                                        Description = ac.Description,
-                                        DuaDate = ac.Deadline,
-                                        UpdateSheuleDate = ac.UpdateSheduleDate,
-                                        ActualFinishDate = ac.ActualFinishDate,
-                                        Code = ac.KPILevelCode,
-                                        Status = ac.Status,
-                                        PIC = ac.Tag,
-                                        Approved = ac.ApprovedStatus,
-                                        KPIID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).KPIID,
-                                        KPILevelID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).ID
-                                    }).Distinct()
+                    if (_dbContext.Participants.Any(x => x.UserID.Equals(userid)))
+                    {
+                        model = (await (from d in _dbContext.Datas
+                                        join ac in _dbContext.ActionPlans on d.ID equals ac.DataID
+                                        join kpilevelcode in _dbContext.KPILevels on d.KPILevelCode equals kpilevelcode.KPILevelCode
+                                        join own in _dbContext.Participants on kpilevelcode.ID equals own.KPILevelID
+                                        select new
+                                        {
+                                            ac.ID,
+                                            TaskName = ac.Title,
+                                            Description = ac.Description,
+                                            DuaDate = ac.Deadline,
+                                            UpdateSheuleDate = ac.UpdateSheduleDate,
+                                            ActualFinishDate = ac.ActualFinishDate,
+                                            Code = ac.KPILevelCode,
+                                            Status = ac.Status,
+                                            PIC = ac.Tag,
+                                            Approved = ac.ApprovedStatus,
+                                            KPIID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).KPIID,
+                                            KPILevelID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).ID
+                                        }).Distinct()
                     .ToListAsync())
                     .Select(x => new ActionPlanViewModel
                     {
@@ -871,7 +924,10 @@ namespace Service.Implementation
                         URL = _dbContext.Notifications.FirstOrDefault(a => a.ActionplanID == x.ID)?.Link ?? "/"
 
                     }).ToList();
+                        break;
+                    }
                     break;
+
                 default:
 
                     break;
@@ -887,6 +943,7 @@ namespace Service.Implementation
                 data = model,
                 total = totalRow,
                 page = page,
+                totalPage = (int)Math.Ceiling((double)totalRow / pageSize),
                 pageSize = pageSize
             };
         }
@@ -1323,6 +1380,6 @@ namespace Service.Implementation
 
             return Tuple.Create(listSendMail, listEmails.ToList());
         }
-       
+
     }
 }

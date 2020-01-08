@@ -22,19 +22,14 @@ namespace Models.EF
         public string DateUpload { get; set; }
         public string Remark { get; set; }
         public string Target { get; set; }
-        [Column(TypeName = "datetime")]
-        private DateTime? createTime = null;
-        public DateTime CreateTime
-        {
-            get
-            {
-                return this.createTime.HasValue
-                   ? this.createTime.Value
-                   : DateTime.Now;
-            }
 
-            set { this.createTime = value; }
+        public Data()
+        {
+            CreateTime = DateTime.Now;
         }
+
+        [Column(TypeName = "datetime")]
+        public DateTime CreateTime { get; set; }
 
     }
 }

@@ -208,17 +208,33 @@ namespace Service.Implementation
             var listFullNameTag = new List<string>();
             var user = _dbContext.Users;
             var dataModel = _dbContext.Datas;
+            string queryString = string.Empty;
             try
             {
                 //add vao comment
-                var comment2 = new Comment();
-                comment2.CommentMsg = entity.CommentMsg;
-                comment2.DataID = entity.DataID;
-                comment2.UserID = entity.UserID;//sender
-                comment2.Link = entity.Link;
-                comment2.Title = entity.Title;
-            var comment = await CreateComment(comment2);
 
+                var comment = await CreateComment(new Comment
+                {
+                    CommentMsg = entity.CommentMsg,
+                    DataID = entity.DataID,
+                    UserID = entity.UserID,//sender
+                    Link = entity.Link,
+                    Title = entity.Title
+                });
+                if (comment.ID > 0)
+                {
+                    var updateLink = await _dbContext.Comments.FirstOrDefaultAsync(x => x.ID == comment.ID);
+
+                    if (!updateLink.Link.Contains("title"))
+                    {
+                        //Replace Remark become Action Plan
+                        var title = Regex.Replace(comment.Title.Split('-')[0].ToSafetyString(), @"\s+", "-");
+                        updateLink.Link = updateLink.Link + "&type=remark&comID=" + comment.ID + "&dataID=" + comment.DataID + "&title=" + title;
+                        await _dbContext.SaveChangesAsync();
+                        queryString = updateLink.Link;
+
+                    }
+                }
                 //B1: Xu ly viec gui thong bao den Owner khi nguoi gui cap cao hon comment
                 //Tim levelNumber cua user comment
                 var kpilevelIDResult = await _dbContext.KPILevels.FirstOrDefaultAsync(x => x.KPILevelCode == entity.KPILevelCode);
@@ -318,13 +334,14 @@ namespace Service.Implementation
                 return new CommentForReturnViewModel
                 {
                     Status = true,
-                    ListEmails = listEmail
+                    ListEmails = listEmail,
+                    QueryString = queryString
                 };
-        }
+            }
             catch (Exception ex)
             {
                 return new CommentForReturnViewModel { Status = false };
-}
+            }
         }
 
         public async Task<bool> AddCommentHistory(int userid, int dataid)

@@ -1847,7 +1847,6 @@ namespace Service.Implementation
                         URL = item2[0].ToSafetyString(),
                         NotificationID = notificationId,
                         UserID = item,
-                        CreateTime = DateTime.Now
                     });
                 }
             }

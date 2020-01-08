@@ -17,7 +17,7 @@ namespace Service.Interface
     public interface IActionPlanService : ICommonService<ActionPlan>, IDisposable
     {
         Task<Tuple<List<string[]>, bool, string>> Approve(int id, int approveby, string KPILevelCode, int CategoryID);
-        Task<object> LoadActionPlan(string role, int page, int pageSize);
+        Task<object> LoadActionPlan(string role, int page, int pageSize,int userid);
         Task<object> GetAll(int DataID, int CommentID, int userid);
         Task<CommentForReturnViewModel> Add(ActionPlanParams obj);
         Task<Tuple<List<string[]>, bool, string>> Done(int id, int userid, string KPILevelCode, int CategoryID);

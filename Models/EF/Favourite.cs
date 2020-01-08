@@ -14,21 +14,14 @@ namespace Models.EF
         public string KPILevelCode { get; set; }
         public int UserID { get; set; }
         public string Period { get; set; }
-        [Column(TypeName = "datetime")]
-        private DateTime? createTime = null;
-        public DateTime CreateTime
+       
+        public Favourite()
         {
-            get
-            {
-                return this.createTime.HasValue
-                   ? this.createTime.Value
-                   : DateTime.Now;
-            }
-
-            set { this.createTime = value; }
+            CreateTime = DateTime.Now;
         }
-        //public string Like { get; set; }
 
+        [Column(TypeName = "datetime")]
+        public DateTime CreateTime { get; set; }
 
     }
 }

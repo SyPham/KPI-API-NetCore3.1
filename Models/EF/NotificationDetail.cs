@@ -18,12 +18,13 @@ namespace Models.EF
         public string URL { get; set; }
         public string Action { get; set; }
         [Column(TypeName = "datetime")]
-        private DateTime? createTime = null;
-        public DateTime CreateTime
-        {
-            get => this.createTime ?? DateTime.Now;
+        public DateTime CreateTime { get; set; }
 
-            set { this.createTime = value; }
+        public NotificationDetail()
+        {
+            CreateTime = DateTime.Now;
         }
+
+       
     }
 }
