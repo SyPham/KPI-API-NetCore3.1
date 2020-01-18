@@ -76,20 +76,10 @@ namespace API.Controllers
         {
             string token = Request.Headers["Authorization"];
             var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
-
             var levelNumberOfUserComment = Extensions.GetDecodeTokenByProperty(token, "LevelId").ToInt();
-
             var data = await _commentService.AddComment(entity, levelNumberOfUserComment);
             
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
-
-
-            
-            var tos = new List<string>();
-            
-            await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
-
-          
             return Ok(new { status = data.Status, isSendmail = true });
         
         }
@@ -179,9 +169,6 @@ namespace API.Controllers
         {
             var model = await _actionPlanService.Approve(obj.id, obj.approveby, obj.KPILevelCode, obj.CategoryID);
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
-
-
-            
             return Ok(new { status = model.Item2, isSendmail = true });
         }
         [HttpPost]
