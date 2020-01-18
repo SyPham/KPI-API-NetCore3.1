@@ -89,21 +89,7 @@ namespace API.Controllers
             
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
 
-            
-            if (data.ListEmails.Count > 0 && await _settingService.IsSendMail("ADDCOMMENT"))
-            {
-                var model = data.ListEmails.DistinctBy(x => x);
-                //string from = ConfigurationManager.AppSettings["FromEmailAddress"].ToSafetyString();
-                string content = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
-                                   <p>The account <b>" + model.First()[0] + "</b> mentioned you in KPI System Apps. </p>" +
-                                  "<p>Content: " + model.First()[4] + "</p>" +
-                                  "<p>Link: <a href='" + data.QueryString + "'>Click Here</a></p>";
-                Thread thread = new Thread(async () =>
-                {
-                    await _mailHelper.SendEmailRange(model.Select(x => x[1]).ToList(), "[KPI System-02] Comment", content);
-                });
-                thread.Start();
-            }
+          
             return Ok(new { status = data.Status, isSendmail = true });
         
         }
@@ -195,46 +181,16 @@ namespace API.Controllers
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
 
 
-            if (model.Item1.Count > 0 && await _settingService.IsSendMail("APPROVAL"))
-            {
-                Thread thread = new Thread(async () =>
-                {
-                    string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
-                    var data = model.Item1.DistinctBy(x => x);
-                    string content = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
-                                   <p>The account <b>" + data.First()[0].ToTitleCase() + "</b> approved the task <b>'" + data.First()[3] + "'</b> </p>" +
-                                 "<p>Link: <a href='" + model.Item3 + "'>Click Here</a></p>";
-                    await _mailHelper.SendEmailRange(data.Select(x => x[1]).ToList(), "[KPI System-05] Approved", content);
-                });
-                thread.Start();
-            }
+            
             return Ok(new { status = model.Item2, isSendmail = true });
         }
         [HttpPost]
         public async Task<IActionResult> Done([FromBody]DoneDto obj)
         {
-
             string token = Request.Headers["Authorization"];
             var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
-
             var model = await _actionPlanService.Done(obj.id, userID, obj.KPILevelCode, obj.CategoryID);
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
-
-
-            if (model.Item1.Count > 0 && await _settingService.IsSendMail("DONE"))
-            {
-                Thread thread = new Thread(async () =>
-                {
-                    string URL = _configuaration.GetSection("AppSettings:URL").ToSafetyString();
-
-                    var data = model.Item1.DistinctBy(x => x);
-                    string content = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
-                                    <p>The account <b>" + data.First()[0].ToTitleCase() + "</b> has finished the task name <b>'" + data.First()[3] + "'</b></p>" +
-                                  "<p>Link: <a href='" + model.Item3 + "'>Click Here</a></p>";
-                    await _mailHelper.SendEmailRange(data.Select(x => x[1]).ToList(), "[KPI System-04] Action Plan (Finished Task)", content);
-                });
-                thread.Start();
-            }
             return Ok(new { status = model.Item2, isSendmail = true });
         }
         [HttpPost]

@@ -445,6 +445,18 @@ namespace Service.Implementation
                 }
                 _dbContext.NotificationDetails.AddRange(listDetails);
                 await _dbContext.SaveChangesAsync();
+                if (listEmail.Count > 0 && await _settingService.IsSendMail("APPROVAL"))
+                {
+                    Thread thread = new Thread(async () =>
+                    {
+                        var data = listEmail.DistinctBy(x => x);
+                        string content = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
+                                   <p>The account <b>" + data.First()[0].ToTitleCase() + "</b> approved the task <b>'" + data.First()[3] + "'</b> </p>" +
+                                     "<p>Link: <a href='" + model.Link + "'>Click Here</a></p>";
+                        await _mailHelper.SendEmailRange(data.Select(x => x[1]).ToList(), "[KPI System-05] Approved", content);
+                    });
+                    thread.Start();
+                }
                 return Tuple.Create(listEmail, true, model.Link);
             }
             catch (Exception ex)
@@ -543,7 +555,8 @@ namespace Service.Implementation
                     IsBoss = (int?)_dbContext.Roles.FirstOrDefault(a => a.ID == userModel.Permission).ID < 3 ? true : false,
                     CreatedBy = x.UserID,
                     x.Auditor,
-                    x.CreateTime
+                    x.CreateTime,
+                    x.Remark
                 })
                 .ToListAsync();
             var model = data
@@ -563,7 +576,7 @@ namespace Service.Implementation
                 ListUserIDs = _dbContext.Tags.Where(a => a.ActionPlanID == x.ID).Select(a => a.UserID).ToList(),
                 Auditor = x.Auditor,
                 ListAuditorIDs = _dbContext.ActionPlanDetails.Where(a => a.ActionPlanID == x.ID).Select(a => a.UserID).ToList(),
-
+                Remark = x.Remark,
                 CreatedByName = _dbContext.Users.Find(x.CreatedBy)?.Alias ?? "#N/A",
                 CreatedTime = x.CreateTime
             }).ToList();
@@ -686,7 +699,7 @@ namespace Service.Implementation
                                     $"<p>Link: <a href='{item.Link}'>Click Here</a></p>";
                     Thread thread = new Thread(async () =>
                    {
-                      await _mailHelper.SendEmailRange(listEmail, "[KPI System-00] Action Plan (Remark on the task)", content);
+                       await _mailHelper.SendEmailRange(listEmail, "[KPI System-00] Action Plan (Remark on the task)", content);
 
                    });
 
@@ -852,7 +865,30 @@ namespace Service.Implementation
                     }
                     _dbContext.NotificationDetails.AddRange(listDetails);
                     await _dbContext.SaveChangesAsync();
+                    if (listEmail.Count > 0 && await _settingService.IsSendMail("DONE"))
+                    {
+                        Thread thread = new Thread(async () =>
+                        {
+                            if (model.Status == false)
+                            {
+                                var data = listEmail.DistinctBy(x => x);
+                                string contentUnFinished = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p>" +
+                                    $"<p>The account <b>{ data.First()[0].ToTitleCase()}</b> changed the status of <b>task name '{ data.First()[3]} (Task ID {model.ID})'</b> to unfinished <b>{data.First()[3]}</b></p>" +
+                                     $"<p>Link: <a href='{model.Link}'>Click Here</a></p>";
+                                await _mailHelper.SendEmailRange(data.Select(x => x[1]).ToList(), "[KPI System-04] Action Plan (Unfinished Task)", contentUnFinished);
+                            }
+                            else if (model.Status == true)
+                            {
+                                var data = listEmail.DistinctBy(x => x);
+                                string content = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p>" +
+                                     $"<p>The account <b>{data.First()[0].ToTitleCase()}</b> has finished the task name <b>'{data.First()[3]} (Task ID {model.ID})'</b></p>" +
+                                     $"<p>Link: <a href='{model.Link}'>Click Here</a></p>";
+                                await _mailHelper.SendEmailRange(data.Select(x => x[1]).ToList(), "[KPI System-04] Action Plan (Finished Task)", content);
+                            }
 
+                        });
+                        thread.Start();
+                    }
                     return Tuple.Create(listEmail, true, model.Link);
                 }
                 catch (Exception ex)

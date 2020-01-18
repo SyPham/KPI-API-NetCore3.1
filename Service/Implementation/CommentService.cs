@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Models.Data;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Service.Implementation
 {
@@ -18,11 +19,18 @@ namespace Service.Implementation
     {
         private readonly DataContext _dbContext;
         private readonly INotificationService _notificationService;
+        private readonly IMailExtension _mailHelper;
+        private readonly ISettingService _settingService;
 
-        public CommentService(DataContext dbContext, INotificationService notificationService)
+        public CommentService(DataContext dbContext,
+            IMailExtension mailHelper,
+            ISettingService settingService,
+            INotificationService notificationService)
         {
             _dbContext = dbContext;
             _notificationService = notificationService;
+            _mailHelper = mailHelper;
+            _settingService = settingService;
         }
 
         #region Common
@@ -330,6 +338,20 @@ namespace Service.Implementation
                     await _notificationService.Add(notify);
                 }
 
+                if (listEmail.Count > 0 && await _settingService.IsSendMail("ADDCOMMENT"))
+                {
+                    var model = listEmail.DistinctBy(x => x);
+                    //string from = ConfigurationManager.AppSettings["FromEmailAddress"].ToSafetyString();
+                    string content = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
+                                   <p>The account <b>" + model.First()[0] + "</b> mentioned you in KPI System Apps. </p>" +
+                                      "<p>Content: " + model.First()[4] + "</p>" +
+                                      "<p>Link: <a href='" + queryString + "'>Click Here</a></p>";
+                    Thread thread = new Thread(async () =>
+                    {
+                        await _mailHelper.SendEmailRange(model.Select(x => x[1]).ToList(), "[KPI System-02] Comment", content);
+                    });
+                    thread.Start();
+                }
 
                 return new CommentForReturnViewModel
                 {
