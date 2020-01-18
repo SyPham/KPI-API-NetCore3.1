@@ -52,9 +52,9 @@ namespace API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-
-            return Ok(await _menuService.GetAll());
-
+            string token = Request.Headers["Authorization"];
+            var roleId = Extensions.DecodeToken(token).FirstOrDefault(x => x.Type == "Role").Value.ToInt();
+            return Ok(await _menuService.GetMenusAsync(roleId));
         }
         [HttpGet("{keyword}")]
         [HttpGet("{page}/{pageSize}/{keyword}")]

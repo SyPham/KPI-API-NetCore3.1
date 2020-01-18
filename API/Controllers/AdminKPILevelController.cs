@@ -16,11 +16,14 @@ namespace API.Controllers
     {
         private readonly IKPILevelService _KPILevelService;
         private readonly ILevelService _levelService;
+        private readonly IUserService _userService;
 
-        public AdminKPILevelController(IKPILevelService KPILevelService, ILevelService levelService)
+        public AdminKPILevelController(IKPILevelService KPILevelService, ILevelService levelService,IUserService userService)
         {
             _KPILevelService = KPILevelService;
             _levelService = levelService;
+            _userService = userService;
+
         }
         // GET: AdminKPILevel
         /// <summary>
@@ -62,14 +65,17 @@ namespace API.Controllers
         {
             return Ok(await _KPILevelService.UpdateKPILevel(entity));
         }
+        [AllowAnonymous]
         [HttpGet("{ID}")]
         public async Task<IActionResult> GetbyID(int ID)
         {
-            return Ok(await _KPILevelService.GetById(ID));
+            return Ok(await _KPILevelService.GetDetail(ID));
         }
-        //public async Task<IActionResult> GetListAllUser()
-        //{
-        //    return Ok(await new UserAdminDAO().GetListAllUser());
-        //}
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetListAllUser()
+        {
+            return Ok(await _userService.GetAll());
+        }
     }
 }

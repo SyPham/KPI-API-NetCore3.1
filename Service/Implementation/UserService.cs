@@ -46,7 +46,7 @@ namespace Service.Implementation
             }).ToListAsync();
             return model;
         }
-       
+
         public async Task<bool> ChangePassword(string username, string newpass)
         {
             var item = await _dbContext.Users.FirstOrDefaultAsync(x => x.Username == username);
@@ -158,7 +158,7 @@ namespace Service.Implementation
 
         public async Task<List<User>> GetAll()
         {
-            return await _dbContext.Users.Where(x => x.State == true).ToListAsync();
+            return await _dbContext.Users.Where(x => x.Role > 1 && x.State == true).ToListAsync();
         }
         public async Task<object> LoadDataUser(int levelid, string code, int page, int pageSize)
         {

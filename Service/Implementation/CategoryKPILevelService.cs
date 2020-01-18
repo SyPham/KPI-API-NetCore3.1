@@ -12,7 +12,7 @@ using Service.Helpers;
 
 namespace Service.Implementation
 {
-    
+
     public class CategoryKPILevelService : ICategoryKPILevelService
     {
         private readonly DataContext _dbContext;
@@ -141,10 +141,7 @@ namespace Service.Implementation
                             await _dbContext.SaveChangesAsync();
                             _dbContext.Uploaders.Add(new Uploader { UserID = uploader, KPILevelID = kpilevelID, CategoryID = categoryID });
                         }
-
-
                     }
-
                 }
             }
             if (!ownerArr.IsNullOrEmpty())
@@ -159,7 +156,6 @@ namespace Service.Implementation
                             var listUploader = await _dbContext.Owners.Where(x => x.KPILevelID == kpilevelID && x.CategoryID == categoryID).ToListAsync();
                             _dbContext.Owners.RemoveRange(listUploader);
                             await _dbContext.SaveChangesAsync();
-
                             _dbContext.Owners.Add(new Owner { UserID = owner, KPILevelID = kpilevelID, CategoryID = categoryID });
                         }
                     }
@@ -219,6 +215,7 @@ namespace Service.Implementation
                         }
                     }
                 }
+
             }
             try
             {

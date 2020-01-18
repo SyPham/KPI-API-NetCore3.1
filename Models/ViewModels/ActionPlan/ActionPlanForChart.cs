@@ -21,6 +21,10 @@ namespace Models.ViewModels.ActionPlan
         public IEnumerable<Tag> Tags { get; set; }
         public List<int> ListUserIDs { get; set; }
         public int Auditor { get; set; }
+        public List<int> ListAuditorIDs { get; set; }
+
+        public string CreatedByName { get; set; }
+        public DateTime CreatedTime { get; set; }
 
     }
 }

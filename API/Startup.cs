@@ -23,6 +23,7 @@ using Microsoft.OpenApi.Models;
 using Service.Implementation;
 using Models.Data;
 using System.Collections.Generic;
+using Service.Helpers;
 
 namespace API
 {
@@ -42,7 +43,7 @@ namespace API
 
             // configure strongly typed settings objects
             var appSettingsSection = Configuration.GetSection("AppSettings");
-            services.Configure<AppSettings>(appSettingsSection);
+            //services.Configure<AppSettings>(appSettingsSection);
 
 
             services.AddControllers().AddNewtonsoftJson(options =>
@@ -117,6 +118,8 @@ namespace API
             // configure DI for application services
 
             services.AddScoped<IMailHelper, MailHelper>();
+            services.AddScoped<IMailExtension, MailExtension>();
+
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IActionPlanService, ActionPlanService>();
             services.AddScoped<IAuthService, AuthService>();

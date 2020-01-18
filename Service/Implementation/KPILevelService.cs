@@ -148,7 +148,29 @@ namespace Service.Implementation
         {
             throw new NotImplementedException();
         }
+        public async Task<object> GetDetail(int ID)
+        {
+            var item = await _dbContext.KPILevels.FirstOrDefaultAsync(x => x.ID == ID);
+            var codeW = item.KPILevelCode + (item.WeeklyChecked ?? false == true ? "W" : "");
+            var codeM = item.KPILevelCode + (item.MonthlyChecked ?? false == true ? "M" : "");
+            var codeQ = item.KPILevelCode + (item.QuarterlyChecked ?? false == true ? "Q" : "");
+            var codeY = item.KPILevelCode + (item.YearlyChecked ?? false == true ? "Y" : "");
 
+            string WorkingPlanOfWeekly = (await _dbContext.WorkingPlans.FirstOrDefaultAsync(x => x.Code == codeW))?.Content ?? "Not avaiable!";
+            string WorkingPlanOfMonthly = (await _dbContext.WorkingPlans.FirstOrDefaultAsync(x => x.Code == codeM))?.Content ?? "Not avaiable!";
+            string WorkingPlanOfQuarterly = (await _dbContext.WorkingPlans.FirstOrDefaultAsync(x => x.Code == codeQ))?.Content ?? "Not avaiable!";
+            string WorkingPlanOfYearly = (await _dbContext.WorkingPlans.FirstOrDefaultAsync(x => x.Code == codeY))?.Content ?? "Not avaiable!";
+
+            return new
+            {
+                status = true,
+                data = item,
+                WorkingPlanOfWeekly,
+                WorkingPlanOfMonthly,
+                WorkingPlanOfQuarterly,
+                WorkingPlanOfYearly,
+            };
+        }
         public Task<PagedList<KPILevel>> GetAllPaging(string keyword, int page, int pageSize)
         {
             throw new NotImplementedException();
@@ -179,12 +201,42 @@ namespace Service.Implementation
         {
             throw new NotImplementedException();
         }
+        public async Task<bool> AddWorkingPlan(WorkingPlan entity)
+        {
+            var item = await _dbContext.WorkingPlans.FirstOrDefaultAsync(x => x.Code == entity.Code);
+            if (item != null)
+            {
+                item.Content = entity.Content;
+            }
+            else
+            {
+                _dbContext.WorkingPlans.Add(entity);
+
+            }
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
         public async Task<bool> Update(KPILevelForUpdate entity)
         {
             var kpiLevel = await _dbContext.KPILevels.FirstOrDefaultAsync(x => x.ID == entity.ID);
+            if(kpiLevel==null)
+                return false;
+
             var kpiModel = await _dbContext.KPIs.FirstOrDefaultAsync(x => x.ID == kpiLevel.KPIID);
             var ocModel = await _dbContext.Levels.FirstOrDefaultAsync(x => x.ID == kpiLevel.LevelID);
+            if (!entity.Target.IsNullOrEmpty())
+            {
+                string code = ocModel.LevelNumber + ocModel.Code + kpiModel.Code + entity.Period;
+                var status = await AddWorkingPlan(new WorkingPlan { Code = code, Content = entity.Target });
+            }
             if (entity.Weekly != null)
             {
                 kpiLevel.Weekly = entity.Weekly;
@@ -660,6 +712,27 @@ namespace Service.Implementation
                 source = source.Where(x => x.LevelID.Equals(levelId));
             }
             return await PagedList<KPILevel>.CreateAsync(source, page, pageSize);
+        }
+
+        public async Task<object> GetItemInListOfWorkingPlan(string code, string period)
+        {
+            var kpilevelcode = code + period;
+            if (kpilevelcode.IsNullOrEmpty())
+            {
+                return new
+                {
+                    status = false,
+                    message = "Error!",
+                    data = new WorkingPlan { Content = "Not avaiable!" }
+                };
+            }
+            return new
+            {
+                status = true,
+                message = "Successfully!",
+                data = await _dbContext.WorkingPlans.FirstOrDefaultAsync(x => x.Code == kpilevelcode)
+            };
+
         }
     }
 }

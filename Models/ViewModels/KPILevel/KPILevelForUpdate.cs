@@ -16,6 +16,8 @@ namespace Models.ViewModels.KPILevel
         public string Period { get; set; }
         public int? Weekly { get; set; }
         public string Monthly { get; set; }
+        public string Target { get; set; }
+
         public string Quarterly { get; set; }
         public string Yearly { get; set; }
         public bool? Checked { get; set; }

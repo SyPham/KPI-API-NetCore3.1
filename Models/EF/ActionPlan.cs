@@ -29,7 +29,8 @@ namespace Models.EF
         [Column("TagID")]
         public int TagID { get; set; }
         public int ApprovedBy { get; set; }
-       
+        public string Remark { get; set; }
+
         public string Link { get; set; }
         [Column(TypeName = "datetime")]
         public DateTime CreateTime { get; set; }

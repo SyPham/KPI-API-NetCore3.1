@@ -22,10 +22,10 @@ namespace Service.Interface
         Task<CommentForReturnViewModel> Add(ActionPlanParams obj);
         Task<Tuple<List<string[]>, bool, string>> Done(int id, int userid, string KPILevelCode, int CategoryID);
         Task<bool> UpdateActionPlan(ActionPlanForUpdateParams actionPlan);
-        Task<bool> UpdateSheduleDate(string name, string value, string pk, int userid);
+        Task<object> UpdateSheduleDate(string name, string value, string pk, int userid);
         Tuple<List<object[]>, List<UserViewModel>> CheckDeadline();
         Tuple<List<object[]>, List<UserViewModel>> CheckLateOnUpdateData();
         Tuple<List<object[]>, List<UserViewModel>> CheckLateOnUpdateData(int userid);
-
+        Task<object> GetAll(int DataID, int CommentID, int userid, string keyword, int page, int pageSize);
     }
 }

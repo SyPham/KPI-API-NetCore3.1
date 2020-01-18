@@ -60,6 +60,7 @@ namespace API.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetListTree()
         {
             return Ok(await _levelService.GetListTree());

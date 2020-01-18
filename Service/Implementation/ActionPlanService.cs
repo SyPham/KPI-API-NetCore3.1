@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Service.Implementation
 {
@@ -23,16 +24,22 @@ namespace Service.Implementation
         private readonly IDataService _dataService;
         private readonly INotificationService _notificationService;
         private readonly ILevelService _levelService;
+        private readonly ISettingService _settingService;
+        private readonly IMailExtension _mailHelper;
 
         public ActionPlanService(DataContext dbContext,
             IErrorMessageService errorService,
             IDataService dataService,
             INotificationService notificationService,
+            ISettingService settingService,
+            IMailExtension mailHelper,
             ILevelService levelService)
         {
             _dbContext = dbContext;
             _errorService = errorService;
             _dataService = dataService;
+            _settingService = settingService;
+            _mailHelper = mailHelper;
             _notificationService = notificationService;
             _levelService = levelService;
         }
@@ -88,7 +95,7 @@ namespace Service.Implementation
                 //+) Gắn thêm link để chuyển đến trang Chartperiod sau đó hiện model
                 if (!obj.Link.Contains("title"))
                 {
-                    entity.Link = obj.Link + "&type=task&comID=" + obj.CommentID + "&dataID=" + obj.DataID + "&title=" + title;
+                    entity.Link = obj.Link + $"/task/{obj.CommentID}/{obj.DataID}/{title}";
                 }
                 else
                 {
@@ -115,8 +122,8 @@ namespace Service.Implementation
 
                 var listAuditors = new List<int>();
                 var listPIC = new List<int>();
-                //try
-                //{
+                try
+                {
                     entity.Description = obj.Description;
 
                     //Bước 2: Thêm mới ActionPlan (Task)
@@ -318,6 +325,32 @@ namespace Service.Implementation
                         //Lưu Db
                         _dbContext.NotificationDetails.AddRange(listNotificationDetail);
                         await _dbContext.SaveChangesAsync();
+
+                        if (listEmail.Count > 0 && await _settingService.IsSendMail("ADDTASK"))
+                        {
+
+                            string contentForPIC = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
+                                <p>The account <b>" + listEmail.First()[0].ToTitleCase() + "</b> assigned a task to you in KPI Sytem App. </p>" +
+                                            "<p>Task name : <b>" + listEmail.First()[3] + "</b></p>" +
+                                            "<p>Description : " + listEmail.First()[4] + "</p>" +
+                                            "<p>Link: <a href='" + entity.Link + "'>Click Here</a></p>";
+
+                            string contentAuditor = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
+                                <p>The account <b>" + listEmailsForAuditor.First()[0].ToTitleCase() + "</b> created a new task ,assigned you are an auditor in KPI Sytem App. </p>" +
+                                            "<p>Task name : <b>" + listEmailsForAuditor.First()[3] + "</b></p>" +
+                                            "<p>Description : " + listEmailsForAuditor.First()[4] + "</p>" +
+                                            "<p>Link: <a href='" + entity.Link + "'>Click Here</a></p>";
+                            Thread thread = new Thread(async () =>
+                            {
+                                await _mailHelper.SendEmailRange(listEmail.Select(x => x[1]).ToList(), "[KPI System-03] Action Plan (Add Task - Assign Auditor)", contentAuditor);
+                            });
+                            Thread thread2 = new Thread(async () =>
+                            {
+                                await _mailHelper.SendEmailRange(listEmail.Select(x => x[1]).ToList(), "[KPI System-03] Action Plan (Add Task)", contentForPIC);
+                            });
+                            thread.Start();
+                            thread2.Start();
+                        }
                     }
                     return new CommentForReturnViewModel
                     {
@@ -326,16 +359,16 @@ namespace Service.Implementation
                         ListEmailsForAuditor = listEmailsForAuditor,
                         QueryString = entity.Link
                     };
-                //}
-                //catch (Exception ex)
-                //{
-                //    var message = ex.Message;
-                //    return new CommentForReturnViewModel
-                //    {
-                //        Status = false,
-                //        ListEmails = listEmail
-                //    };
-                //}
+                }
+                catch (Exception ex)
+                {
+                    var message = ex.Message;
+                    return new CommentForReturnViewModel
+                    {
+                        Status = false,
+                        ListEmails = listEmail
+                    };
+                }
             }
 
 
@@ -459,7 +492,8 @@ namespace Service.Implementation
                     x.UserID,
                     IsBoss = (int?)_dbContext.Roles.FirstOrDefault(a => a.ID == userModel.Role).ID < 2 ? true : false,
                     CreatedBy = x.UserID,
-                    x.Auditor
+                    x.Auditor,
+                    x.CreateTime
                 })
                 .ToListAsync();
             var model = data
@@ -477,13 +511,83 @@ namespace Service.Implementation
                 IsBoss = x.IsBoss,
                 CreatedBy = x.UserID,
                 ListUserIDs = _dbContext.Tags.Where(a => a.ActionPlanID == x.ID).Select(a => a.UserID).ToList(),
-                Auditor = x.Auditor
+                Auditor = x.Auditor,
+                ListAuditorIDs = _dbContext.ActionPlanDetails.Where(a => a.ActionPlanID == x.ID).Select(a => a.UserID).ToList(),
+                CreatedByName = _dbContext.Users.Find(x.CreatedBy)?.Alias ?? "#N/A",
+                CreatedTime = x.CreateTime
             }).ToList();
             return new
             {
                 status = true,
                 data = model,
 
+            };
+        }
+        public async Task<object> GetAll(int DataID, int CommentID, int userid, string keyword, int page, int pageSize)
+        {
+            var userModel = await _dbContext.Users.FirstOrDefaultAsync(x => x.ID == userid);
+            var data = await _dbContext.ActionPlans
+                .Where(x => x.DataID == DataID && x.CommentID == CommentID)
+                .Select(x => new
+                {
+                    x.ID,
+                    x.Title,
+                    x.Description,
+                    x.Tag,
+                    x.ApprovedStatus,
+                    x.Deadline,
+                    x.UpdateSheduleDate,
+                    x.ActualFinishDate,
+                    x.Status,
+                    x.UserID,
+                    IsBoss = (int?)_dbContext.Roles.FirstOrDefault(a => a.ID == userModel.Permission).ID < 3 ? true : false,
+                    CreatedBy = x.UserID,
+                    x.Auditor,
+                    x.CreateTime
+                })
+                .ToListAsync();
+            var model = data
+            .Select(x => new ActionPlanForChart
+            {
+                ID = x.ID,
+                Title = x.Title,
+                Description = x.Description,
+                Tag = x.Tag,
+                ApprovedStatus = x.ApprovedStatus,
+                Deadline = x.Deadline.ToString("dddd, MMMM d, yyyy"),
+                UpdateSheduleDate = x.UpdateSheduleDate.HasValue ? x.UpdateSheduleDate.Value.ToString("dddd, MMMM d, yyyy") : "#N/A",
+                ActualFinishDate = x.ActualFinishDate.HasValue ? x.ActualFinishDate.Value.ToString("dddd, MMMM d, yyyy") : "#N/A",
+                Status = x.Status,
+                IsBoss = x.IsBoss,
+                CreatedBy = x.UserID,
+                ListUserIDs = _dbContext.Tags.Where(a => a.ActionPlanID == x.ID).Select(a => a.UserID).ToList(),
+                Auditor = x.Auditor,
+                ListAuditorIDs = _dbContext.ActionPlanDetails.Where(a => a.ActionPlanID == x.ID).Select(a => a.UserID).ToList(),
+
+                CreatedByName = _dbContext.Users.Find(x.CreatedBy)?.Alias ?? "#N/A",
+                CreatedTime = x.CreateTime
+            }).ToList();
+
+            int total = model.Count();
+            if (!keyword.IsNullOrEmpty())
+            {
+                model = model.Where(x => x.Title.Contains(keyword)
+                                        || x.Description.Contains(keyword)
+                                        || x.CreatedByName.Contains(keyword)
+                                        || x.Tag.Contains(keyword)).ToList();
+            }
+            model = model.OrderByDescending(x => x.CreatedTime)
+             .Skip((page - 1) * pageSize)
+             .Take(pageSize).ToList();
+
+            return new
+            {
+                status = true,
+                data = model,
+                total = total,
+                page,
+                pageSize,
+                totalPage = (int)Math.Ceiling((double)total / pageSize),
             };
         }
         public Task<ActionPlan> GetById(int Id)
@@ -541,16 +645,75 @@ namespace Service.Implementation
         {
             throw new NotImplementedException();
         }
-        public async Task<bool> UpdateSheduleDate(string name, string value, string pk, int userid)
+        public async Task<object> UpdateSheduleDate(string name, string value, string pk, int userid)
         {
             try
             {
+                var listuserChecking = new List<int>();
+                var listEmail = new List<string>();
 
                 var id = pk.ToSafetyString().ToInt();
-                var item = await _dbContext.ActionPlans.FirstOrDefaultAsync(x => x.UserID == userid && x.ID == id);
+                var listDetails = new List<NotificationDetail>();
+
+                var item = await _dbContext.ActionPlans.FirstOrDefaultAsync(x => x.ID == id);
+
+                var userAuditors = _dbContext.ActionPlanDetails.Where(x => x.ActionPlanID == item.ID).Select(x => x.UserID);
+                var pics = _dbContext.Tags.Where(x => x.ActionPlanID == item.ID).Select(x => x.UserID);
+                listuserChecking.Add(item.UserID);
+                listuserChecking.AddRange(userAuditors);
+
+                listuserChecking.ForEach(userid =>
+                {
+                    listEmail.Add(_dbContext.Users.FirstOrDefault(x => x.ID == userid)?.Email);
+
+                });
+                if (name.ToLower() == "remark")
+                {
+                    if (!listuserChecking.Contains(userid))
+                    {
+                        return new
+                        {
+                            message = "You are not assigned this task!",
+                            status = false
+                        };
+                    }
+                    item.Remark = value;
+                    await _dbContext.SaveChangesAsync();
+
+                    string content = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p>" +
+                                    $"<p>The account <b>{_dbContext.Users.FirstOrDefault(x => x.ID == userid)?.Alias.ToTitleCase()}</b> remarked on the task name <b>'{item.Title} <span style='color:red'>(Task ID #{item.ID})</span>'</b></p>" +
+                                    $"<p>Content: {item.Remark ?? "#N/A"}</p>" +
+                                    $"<p>Link: <a href='{item.Link}'>Click Here</a></p>";
+                    Thread thread = new Thread(async () =>
+                   {
+                      await _mailHelper.SendEmailRange(listEmail, "[KPI System-00] Action Plan (Remark on the task)", content);
+
+                   });
+
+
+                    return new
+                    {
+
+                        message = "Successfully!",
+                        status = true
+                    };
+                }
+
+                if (!listuserChecking.Contains(userid))
+                {
+                    return new
+                    {
+                        message = "You are not Owner or Auditor!",
+                        status = false
+                    };
+                }
                 if (item == null)
                 {
-                    return false;
+                    return new
+                    {
+                        message = "Error! Please contact to administrator!",
+                        status = false
+                    };
                 }
                 if (name.ToLower() == "title")
                 {
@@ -590,11 +753,19 @@ namespace Service.Implementation
                 }
 
                 await _dbContext.SaveChangesAsync();
-                return true;
+                return new
+                {
+                    message = "Successfully!",
+                    status = true
+                };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return false;
+                return new
+                {
+                    message = ex.Message,
+                    status = false
+                };
             }
         }
         private async Task<Notification> CreateNotification(Notification entity)
@@ -736,6 +907,7 @@ namespace Service.Implementation
                                             ActualFinishDate = ac.ActualFinishDate,
                                             Status = ac.Status,
                                             PIC = ac.Tag,
+                                            ac.Remark,
                                             Code = ac.KPILevelCode,
                                             Approved = ac.ApprovedStatus,
                                             KPIID = _dbContext.KPILevels.FirstOrDefault(a => a.KPILevelCode == d.KPILevelCode).KPIID,
@@ -750,6 +922,7 @@ namespace Service.Implementation
                          UpdateSheduleDate = x.UpdateSheuleDate?.ToString("dddd, dd MMMM yyyy"),
                          ActualFinishDate = x.ActualFinishDate?.ToString("dddd, dd MMMM yyyy"),
                          Status = x.Status,
+                         Remark = x.Remark,
                          PIC = x.PIC,
                          OC = _levelService.GetNode(x.Code),
                          Approved = x.Approved,
@@ -1151,7 +1324,7 @@ namespace Service.Implementation
                     var itemSendMail = new object[] {
                         item.Title,
                         item.Deadline.ToString("dddd, dd MMMM yyyy"),
-                        item.Link+ "&type=task&comID="+item.CommentID+"&dataID="+ item.DataID+"&title=" + name,
+                        item.Link+ $"task/{item.CommentID}/{item.DataID}/{name}",
                         ocName,
                         kpiname
                     };

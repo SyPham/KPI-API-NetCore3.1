@@ -19,7 +19,7 @@ namespace Service.Interface
     {
         Task<object> GetAllDataByCategory(int categoryid, string period, int? start, int? end, int? year);
         Task<DataUserViewModel> GetAllOwner(int categoryID, int kpilevelID);
-        ChartViewModel ListDatas(string kpilevelcode, string period, int? year, int? start, int? end, int? catid);
+        Task<ChartViewModel> ListDatas(string kpilevelcode, string period, int? year, int? start, int? end, int? catid,int userid);
         Task<object> Remark(int dataid);
         Task<bool> UpdateRemark(int dataid, string remark);
         DataCompareViewModel Compare(string obj);

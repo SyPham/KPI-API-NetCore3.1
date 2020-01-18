@@ -6,6 +6,7 @@ using Service.Interface;
 using System.Threading.Tasks;
 using API.Helpers;
 using Microsoft.AspNetCore.Authorization;
+using API.Dto.CategoryKPILevelAdmin;
 
 namespace API.Controllers
 {
@@ -23,6 +24,7 @@ namespace API.Controllers
 
         [HttpGet("{level}/{OCID}")]
         [HttpGet("{level}/{OCID}/{page}/{pageSize}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllCategories(int level, int OCID, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _categoryKPILevelService.GetCategoryByOC(page, pageSize, level, OCID));
@@ -35,6 +37,7 @@ namespace API.Controllers
         }
         [HttpGet("{level}/{category}")]
         [HttpGet("{level}/{category}/{page}/{pageSize}")]
+        [AllowAnonymous]
         public async Task<IActionResult> LoadDataKPILevel(int level, int category, int page = ConstantCommon.PAGE, int pageSize = ConstantCommon.PAGE_SIZE)
         {
             return Ok(await _categoryKPILevelService.LoadDataKPILevel(level, category, page, pageSize));
@@ -45,11 +48,12 @@ namespace API.Controllers
             return Ok(await _categoryKPILevelService.Add(entity));
         }
         [HttpPost]
-        public async Task<IActionResult> AddGeneral([FromBody]int kpilevel, int category, string pic, string owner, string manager, string sponsor, string participant)
+        public async Task<IActionResult> AddGeneral([FromBody] AddGeneralDto entity)
         {
-            return Ok(await _categoryKPILevelService.AddGeneral(kpilevel, category, pic, owner, manager, sponsor, participant));
+            return Ok(await _categoryKPILevelService.AddGeneral(entity.kpilevel, entity.category, entity.pic, entity.owner, entity.manager, entity.sponsor, entity.participant));
         }
         [HttpGet("{KPILevelID}/{CategoryID}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetUserByCategoryIDAndKPILevelID(int KPILevelID, int CategoryID)
         {
             return Ok(await _categoryKPILevelService.GetUserByCategoryIDAndKPILevelID(CategoryID, KPILevelID));

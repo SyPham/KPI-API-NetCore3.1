@@ -13,13 +13,13 @@ using System.Text.RegularExpressions;
 
 namespace Service.Implementation
 {
-     
+
     public class CommentService : ICommentService
     {
         private readonly DataContext _dbContext;
         private readonly INotificationService _notificationService;
 
-        public CommentService(DataContext dbContext,INotificationService notificationService)
+        public CommentService(DataContext dbContext, INotificationService notificationService)
         {
             _dbContext = dbContext;
             _notificationService = notificationService;
@@ -127,11 +127,11 @@ namespace Service.Implementation
             {
                 if (users.IndexOf("@") != -1)
                 {
-                    users= users.Replace("@", "").Trim();
+                    users = users.Replace("@", "").Trim();
                 }
                 var username = users;
 
-            var recipient = await user.FirstOrDefaultAsync(x => x.Username == username);// nguoi nhan
+                var recipient = await user.FirstOrDefaultAsync(x => x.Username == username);// nguoi nhan
                 if (recipient != null)
                 {
                     var itemtag = new Tag();
@@ -155,12 +155,12 @@ namespace Service.Implementation
             }
             else//Tag nhieu nguoi
             {
-                if(users.IndexOf("@") != -1)
+                if (users.IndexOf("@") != -1)
                 {
                     Regex pattern = new Regex("s[@]");
                     pattern.Replace(users, "");
                 }
-              
+
                 var list = users.Split(',');
 
                 var commentID = comment.ID;
@@ -229,7 +229,7 @@ namespace Service.Implementation
                     {
                         //Replace Remark become Action Plan
                         var title = Regex.Replace(comment.Title.Split('-')[0].ToSafetyString(), @"\s+", "-");
-                        updateLink.Link = updateLink.Link + "&type=remark&comID=" + comment.ID + "&dataID=" + comment.DataID + "&title=" + title;
+                        updateLink.Link = updateLink.Link + $"/remark/{comment.ID}/{comment.DataID}/{title}";
                         await _dbContext.SaveChangesAsync();
                         queryString = updateLink.Link;
 

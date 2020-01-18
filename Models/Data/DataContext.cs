@@ -45,6 +45,7 @@ namespace Models.Data
         public DbSet<Setting> Settings { get; set; }
         public DbSet<MenuLang> MenuLangs { get; set; }
         public DbSet<MenuRole> MenuRoles { get; set; }
+        public DbSet<WorkingPlan> WorkingPlans { get; set; }
 
         public DataContext(DbContextOptions<DataContext> options) : base(options)
         {

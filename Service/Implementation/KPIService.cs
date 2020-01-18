@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Service.Implementation
 {
-   
+
     public class KPIService : IKPIService
     {
         private readonly DataContext _dbContext;
@@ -128,7 +128,8 @@ namespace Service.Implementation
         }
         public async Task<object> GetAllAjax()
         {
-            return await _dbContext.KPIs.Select(x => new {
+            return await _dbContext.KPIs.Select(x => new
+            {
                 x.ID,
                 x.Code,
                 x.Name,
@@ -150,7 +151,7 @@ namespace Service.Implementation
         public async Task<object> LoadData(string name = "", int page = 1, int pageSize = 10)
         {
             name = name.ToSafetyString().ToLower();
-            
+
             var model = await _dbContext.KPIs.Select(
                 x => new KPIViewModel
                 {
@@ -166,9 +167,10 @@ namespace Service.Implementation
                 ).ToListAsync();
             if (!name.IsNullOrEmpty())
             {
-                model = model.Where(x => x.Name.Contains(name)).ToList();
+                model = model.Where(x => x.Name.ToString().ToLower().Contains(name.ToString().ToLower())).ToList();
             }
-            var pagedList = PagedList<KPIViewModel>.Create(model,page,pageSize);
+            model = model.OrderByDescending(x => x.CreateTime).ToList();
+            var pagedList = PagedList<KPIViewModel>.Create(model, page, pageSize);
             return new
             {
                 data = pagedList,
@@ -188,7 +190,7 @@ namespace Service.Implementation
                 return "";
         }
         private bool disposed = false;
-      
+
         protected virtual void Dispose(bool disposing)
         {
             if (!this.disposed)
@@ -242,7 +244,7 @@ namespace Service.Implementation
             var source = _dbContext.KPIs.AsQueryable();
             if (!keyword.IsNullOrEmpty())
             {
-                source = source.Where(x => x.Name.Contains(keyword));
+                source = source.Where(x => x.Name.ToString().ToLower().Contains(keyword.ToString().ToLower()));
             }
             return await PagedList<KPI>.CreateAsync(source, page, pageSize);
         }

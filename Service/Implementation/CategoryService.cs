@@ -12,10 +12,10 @@ using System.Threading.Tasks;
 
 namespace Service.Implementation
 {
-    
+
     public class CategoryService : ICategoryService
     {
-       private readonly DataContext _dbContext;
+        private readonly DataContext _dbContext;
 
         public CategoryService(DataContext dbContext)
         {
@@ -31,9 +31,9 @@ namespace Service.Implementation
                 await _dbContext.SaveChangesAsync();
                 return true;
             }
-            catch 
+            catch
             {
-                
+
                 return false;
             }
         }
@@ -86,12 +86,12 @@ namespace Service.Implementation
         {
             try
             {
-                var category =await GetById(Id);
+                var category = await GetById(Id);
                 _dbContext.Categories.Remove(category);
                 await _dbContext.SaveChangesAsync();
                 return true;
             }
-            catch 
+            catch
             {
                 return false;
             }
@@ -183,7 +183,8 @@ namespace Service.Implementation
                 total = totalRow,
                 status = true,
                 page,
-                pageSize
+                pageSize,
+                totalPage = (int)Math.Ceiling((double)totalRow / pageSize)
             };
         }
     }

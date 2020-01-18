@@ -59,12 +59,18 @@ namespace API.Controllers
             _notificationService = notificationService;
         }
         [HttpGet("{kpilevelcode}/{catid}/{period}/{year}/{start}/{end}")]
-        public IActionResult ListDatas(string kpilevelcode, int? catid, string period, int? year, int? start, int? end)
+        public async Task<IActionResult> ListDatas(string kpilevelcode, int? catid, string period, int? year, int? start, int? end)
         {
-            var model = _dataService.ListDatas(kpilevelcode, period, year, start, end, catid);
+            string token = Request.Headers["Authorization"];
+            var userID = Extensions.GetDecodeTokenByProperty(token, "nameid").ToInt();
+            var model =await _dataService.ListDatas(kpilevelcode, period, year, start, end, catid, userID);
             return Ok(model);
         }
-
+        [HttpGet("{code}/{period}")]
+        public async Task<IActionResult> GetItemInListOfWorkingPlan(string code, string period)
+        {
+            return Ok(await _kPILevelService.GetItemInListOfWorkingPlan(code, period));
+        }
         [HttpPost]
         public async Task<IActionResult> AddComment([FromBody]AddCommentViewModel entity)
         {
@@ -98,8 +104,6 @@ namespace API.Controllers
                 });
                 thread.Start();
             }
-
-            
             return Ok(new { status = data.Status, isSendmail = true });
         
         }
@@ -150,33 +154,7 @@ namespace API.Controllers
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
 
 
-            if (data.ListEmails.Count > 0 && await _settingService.IsSendMail("ADDTASK"))
-            {
-
-                string contentForPIC = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
-                                <p>The account <b>" + data.ListEmails.First()[0].ToTitleCase() + "</b> assigned a task to you in KPI Sytem App. </p>" +
-                                "<p>Task name : <b>" + data.ListEmails.First()[3] + "</b></p>" +
-                                "<p>Description : " + data.ListEmails.First()[4] + "</p>" +
-                                "<p>Link: <a href='" + data.QueryString + "'>Click Here</a></p>";
-
-                string contentAuditor = @"<p><b>*PLEASE DO NOT REPLY* this email was automatically sent from the KPI system.</b></p> 
-                                <p>The account <b>" + data.ListEmailsForAuditor.First()[0].ToTitleCase() + "</b> created a new task ,assigned you are an auditor in KPI Sytem App. </p>" +
-                                "<p>Task name : <b>" + data.ListEmailsForAuditor.First()[3] + "</b></p>" +
-                                "<p>Description : " + data.ListEmailsForAuditor.First()[4] + "</p>" +
-                                "<p>Link: <a href='" + data.QueryString + "'>Click Here</a></p>";
-                Thread thread = new Thread(async () =>
-                {
-                    await _mailHelper.SendEmailRange(data.ListEmails.Select(x => x[1]).ToList(), "[KPI System-03] Action Plan (Add Task - Assign Auditor)", contentAuditor);
-                });
-                Thread thread2 = new Thread(async () =>
-                 {
-                     await _mailHelper.SendEmailRange(data.ListEmails.Select(x => x[1]).ToList(), "[KPI System-03] Action Plan (Add Task)", contentForPIC);
-                 });
-                thread.Start();
-                thread2.Start();
-
-
-            }
+            
             return Ok(new { status = data.Status, isSendmail = true });
         }
 
@@ -197,6 +175,13 @@ namespace API.Controllers
         {
             //var userprofile = Session["UserProfile"] as UserProfileVM;
             return Ok(await _actionPlanService.GetAll(DataID, CommentID, UserID));
+        }
+        [HttpPost("{DataID}/{CommentID}/{UserID}/{keyword}")]
+        [HttpPost("{DataID}/{CommentID}/{UserID}/{keyword}/{page}/{pageSize}")]
+        public async Task<IActionResult> GetAllPaging(int DataID, int CommentID, int UserID, string keyword, int? page, int? pageSize)
+        {
+            //var userprofile = Session["UserProfile"] as UserProfileVM;
+            return Ok(await _actionPlanService.GetAll(DataID, CommentID, UserID, keyword, page ?? 1, pageSize ?? 5));
         }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetByID(int id)
@@ -222,8 +207,6 @@ namespace API.Controllers
                     await _mailHelper.SendEmailRange(data.Select(x => x[1]).ToList(), "[KPI System-05] Approved", content);
                 });
                 thread.Start();
-
-
             }
             return Ok(new { status = model.Item2, isSendmail = true });
         }

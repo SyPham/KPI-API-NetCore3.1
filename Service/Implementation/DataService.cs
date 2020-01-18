@@ -498,7 +498,7 @@ namespace Service.Implementation
             else
                 return string.Join(",", list);
         }
-        public ChartViewModel ListDatas(string kpilevelcode, string period, int? year, int? start, int? end, int? catid)
+        public async Task<ChartViewModel> ListDatas(string kpilevelcode, string period, int? year, int? start, int? end, int? catid,int userid)
         {
             var currentYear = DateTime.Now.Year;
             var currentWeek = DateTime.Now.GetIso8601WeekOfYear();
@@ -512,15 +512,16 @@ namespace Service.Implementation
             if (!string.IsNullOrEmpty(kpilevelcode) && !string.IsNullOrEmpty(period))
             {
                 //label chartjs
-                var item = _dbContext.KPILevels.FirstOrDefault(x => x.KPILevelCode == kpilevelcode);
-
+                var item = await _dbContext.KPILevels.FirstOrDefaultAsync(x => x.KPILevelCode == kpilevelcode);
+                if(item== null)
+                    return new ChartViewModel();
                 var PIC = Updaters(item.ID, categoryid);
                 var Owner = Owners(item.ID, categoryid);
                 var OwnerManagerment = Managers(item.ID, categoryid);
                 var Sponsor = Sponsors(item.ID, categoryid);
                 var Participant = Participants(item.ID, categoryid);
 
-                var kpi = _dbContext.KPIs.FirstOrDefault(x => x.ID == item.KPIID);
+                var kpi = await _dbContext.KPIs.FirstOrDefaultAsync(x => x.ID == item.KPIID);
                 var kpiname = string.Empty;
                 if (kpi != null)
                     kpiname = kpi.Name;
@@ -528,14 +529,14 @@ namespace Service.Implementation
                 //datasets chartjs
                 var model = _dbContext.Datas.Where(x => x.KPILevelCode == kpilevelcode && x.Yearly == yearly);
 
-                var unit = _dbContext.KPIs.FirstOrDefault(x => x.ID == item.KPIID);
+                var unit = await _dbContext.KPIs.FirstOrDefaultAsync(x => x.ID == item.KPIID);
                 if (unit == null) return new ChartViewModel();
                 var unitName = _dbContext.Units.FirstOrDefault(x => x.ID == unit.Unit).Name.ToSafetyString();
 
                 if (period == "W".ToUpper())
                 {
                     var standard = _dbContext.KPILevels.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.WeeklyChecked == true).WeeklyStandard;
-                    var statusFavourites = _dbContext.Favourites.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period) == null ? false : true;
+                    var statusFavourites = _dbContext.Favourites.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period && x.UserID == userid) == null ? false : true;
 
                     //Tạo ra 1 mảng tuần mặc định bằng 0
                     List<string> listDatasets = new List<string>();
@@ -555,9 +556,9 @@ namespace Service.Implementation
                     {
                         model = model.Where(x => x.Yearly == year && x.Week >= start && x.Week <= end);
 
-                        var listValues = model.Where(x => x.Period == "W").OrderBy(x => x.Week).Select(x => x.Value).ToArray();
-                        var listLabelsW = model.Where(x => x.Period == "W").OrderBy(x => x.Week).Select(x => x.Week).ToArray();
-                        var listtargetsW = model.Where(x => x.Period == "W").OrderBy(x => x.Week).Select(x => x.Target).ToArray();
+                        var listValues = await model.Where(x => x.Period == "W").OrderBy(x => x.Week).Select(x => x.Value).ToArrayAsync();
+                        var listLabelsW = await model.Where(x => x.Period == "W").OrderBy(x => x.Week).Select(x => x.Week).ToArrayAsync();
+                        var listtargetsW = await model.Where(x => x.Period == "W").OrderBy(x => x.Week).Select(x => x.Target).ToArrayAsync();
                         for (int i = 0; i < listValues.Length; i++)
                         {
                             listStandards.Add(standard);
@@ -580,7 +581,8 @@ namespace Service.Implementation
                                ID = x.ID,
                                Value = x.Value,
                                Remark = x.Remark,
-                               Week = x.Week
+                               Week = x.Week,
+                               Target = x.Target
                            }).ToList();
 
                     }
@@ -609,7 +611,7 @@ namespace Service.Implementation
                 else if (period == "M".ToUpper())
                 {
                     var standard = _dbContext.KPILevels.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.MonthlyChecked == true).MonthlyStandard;
-                    var statusFavourites = _dbContext.Favourites.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period) == null ? false : true;
+                    var statusFavourites = _dbContext.Favourites.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period && x.UserID == userid) == null ? false : true;
 
                     //Tạo ra 1 mảng tuần mặc định bằng 0
                     List<string> listDatasets = new List<string>();
@@ -629,9 +631,9 @@ namespace Service.Implementation
                     {
                         model = model.Where(x => x.Yearly == year && x.Month >= start && x.Month <= end);
 
-                        var listValues = model.Where(x => x.Period == "M").OrderBy(x => x.Month).Select(x => x.Value).ToArray();
-                        var listLabelsW = model.Where(x => x.Period == "M").OrderBy(x => x.Month).Select(x => x.Month).ToArray();
-                        var listtargetsW = model.Where(x => x.Period == "M").OrderBy(x => x.Month).Select(x => x.Target).ToArray();
+                        var listValues = await model.Where(x => x.Period == "M").OrderBy(x => x.Month).Select(x => x.Value).ToArrayAsync();
+                        var listLabelsW = await model.Where(x => x.Period == "M").OrderBy(x => x.Month).Select(x => x.Month).ToArrayAsync();
+                        var listtargetsW = await model.Where(x => x.Period == "M").OrderBy(x => x.Month).Select(x => x.Target).ToArrayAsync();
                         //Convert sang list string
                         var listStringTargets = Array.ConvertAll(listtargetsW, x => x.ToSafetyString());
                         listTargets.AddRange(listStringTargets);
@@ -684,7 +686,8 @@ namespace Service.Implementation
                                ID = x.ID,
                                Value = x.Value,
                                Remark = x.Remark,
-                               Month = x.Month
+                               Month = x.Month,
+                               Target = x.Target
                            }).ToList();
                     }
 
@@ -712,7 +715,7 @@ namespace Service.Implementation
                 else if (period == "Q".ToUpper())
                 {
                     var standard = _dbContext.KPILevels.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.QuarterlyChecked == true).QuarterlyStandard;
-                    var statusFavourites = _dbContext.Favourites.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period) == null ? false : true;
+                    var statusFavourites = _dbContext.Favourites.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period && x.UserID == userid) == null ? false : true;
 
                     //Tạo ra 1 mảng tuần mặc định bằng 0
                     List<string> listDatasets = new List<string>();
@@ -730,10 +733,10 @@ namespace Service.Implementation
                     if (year > 0 && start > 0 && end > 0)
                     {
                         model = model.Where(x => x.Yearly == year && x.Quarter >= start && x.Quarter <= end);
-                        var listValues = model.Where(x => x.Period == "Q").OrderBy(x => x.Quarter).Select(x => x.Value).ToArray();
-                        var listLabelsW = model.Where(x => x.Period == "Q").OrderBy(x => x.Quarter).Select(x => x.Quarter).ToArray();
+                        var listValues = await model.Where(x => x.Period == "Q").OrderBy(x => x.Quarter).Select(x => x.Value).ToArrayAsync();
+                        var listLabelsW = await model.Where(x => x.Period == "Q").OrderBy(x => x.Quarter).Select(x => x.Quarter).ToArrayAsync();
                         listDatasets.AddRange(listValues);
-                        var listtargetsW = model.Where(x => x.Period == "Q").OrderBy(x => x.Quarter).Select(x => x.Target).ToArray();
+                        var listtargetsW = await model.Where(x => x.Period == "Q").OrderBy(x => x.Quarter).Select(x => x.Target).ToArrayAsync();
 
                         //Convert sang list string
                         var listStringTargets = Array.ConvertAll(listtargetsW, x => x.ToSafetyString());
@@ -764,7 +767,8 @@ namespace Service.Implementation
                              ID = x.ID,
                              Value = x.Value,
                              Remark = x.Remark,
-                             Quater = x.Quarter
+                             Quater = x.Quarter,
+                             Target = x.Target
                          }).ToList();
                     }
 
@@ -795,7 +799,7 @@ namespace Service.Implementation
                     {
                         model = model.Where(x => x.Year >= start && x.Year <= end);
                     }
-                    var datasets = model.Where(x => x.Yearly == year && x.Period == "Y").OrderBy(x => x.Year).Select(x => x.Value).ToArray();
+                    var datasets = await model.Where(x => x.Yearly == year && x.Period == "Y").OrderBy(x => x.Year).Select(x => x.Value).ToArrayAsync();
                     var Dataremarks = model
                       .Where(x => x.Period == "Y")
                       .OrderBy(x => x.Year)
@@ -804,12 +808,13 @@ namespace Service.Implementation
                           ID = x.ID,
                           Value = x.Value,
                           Remark = x.Remark,
-                          Year = x.Year
+                          Year = x.Year,
+                          Target = x.Target
                       }).ToList();
                     //data: labels chartjs
-                    var listlabels = model.Where(x => x.Period == "Y").OrderBy(x => x.Year).Select(x => x.Year).ToArray();
+                    var listlabels = await model.Where(x => x.Period == "Y").OrderBy(x => x.Year).Select(x => x.Year).ToArrayAsync();
                     var labels = Array.ConvertAll(listlabels, x => x.ToSafetyString());
-                    var listtargetsW = model.Where(x => x.Period == "Y").OrderBy(x => x.Year).Select(x => x.Target).ToArray();
+                    var listtargetsW = await model.Where(x => x.Period == "Y").OrderBy(x => x.Year).Select(x => x.Target).ToArrayAsync();
                     //labels của chartjs mặc định có 12 phần tử
                     List<string> listTargets = new List<string>();
                     //Convert sang list string
@@ -827,7 +832,7 @@ namespace Service.Implementation
                         kpiname = kpiname,
                         period = "Y",
                         kpilevelcode = kpilevelcode,
-                        statusfavorite = _dbContext.Favourites.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period) == null ? false : true,
+                        statusfavorite = _dbContext.Favourites.FirstOrDefault(x => x.KPILevelCode == kpilevelcode && x.Period == period && x.UserID == userid) == null ? false : true,
                         PIC = PIC,
                         Owner = Owner,
                         OwnerManagerment = OwnerManagerment,
@@ -1106,7 +1111,7 @@ namespace Service.Implementation
         public List<ChartViewModel2> Compare2(string obj)
         {
             obj = obj.ToSafetyString();
-            var listChartVM = new List<ChartViewModel2>();
+            var listChartViewModel = new List<ChartViewModel2>();
             var value = obj.Split('-');
 
             // var size = value.Length;
@@ -1114,13 +1119,13 @@ namespace Service.Implementation
             {
                 var kpilevelcode = item.Split(',')[0];
                 var period = item.Split(',')[1];
-                listChartVM.Add(Compare2(kpilevelcode, period));
+                listChartViewModel.Add(Compare2(kpilevelcode, period));
             }
-            return listChartVM;
+            return listChartViewModel;
         }
         public DataCompareViewModel Compare(string obj)
         {
-            var listChartVM = new List<ChartViewModel>();
+            var listChartViewModel = new List<ChartViewModel>();
             var model = new DataCompareViewModel();
             obj = obj.ToSafetyString();
 
@@ -1131,7 +1136,7 @@ namespace Service.Implementation
             {
                 var kpilevelcode = item.Split(',')[0];
                 var period = item.Split(',')[1];
-                listChartVM.Add(Compare(kpilevelcode, period));
+                listChartViewModel.Add(Compare(kpilevelcode, period));
                 model.list1 = Compare(kpilevelcode, period);
             }
 

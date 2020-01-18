@@ -115,7 +115,18 @@ namespace Service.Implementation
             return await _dbContext.Menus.Where(x=>x.ID == Id).ToListAsync();
 
         }
-
+        public async Task<List<MenuViewModel>> GetMenusAsync(int role)
+        {
+            var model = await _dbContext.MenuRoles.Where(x => x.RoleID == role).Select(x => new MenuViewModel
+            {
+                Code = x.Menu.Code,
+                BackgroudColor = x.Menu.BackgroudColor,
+                Link = x.Menu.Link,
+                FontAwesome = x.Menu.FontAwesome,
+                Index = x.Index
+            }).ToListAsync();
+            return model;
+        }
         public async Task<PagedList<Menu>> GetAllPaging(string keyword, int page, int pageSize)
         {
             var source = _dbContext.Menus.AsQueryable();

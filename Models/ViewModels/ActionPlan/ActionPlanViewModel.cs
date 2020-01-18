@@ -14,6 +14,8 @@ namespace Models.ViewModels.ActionPlan
 
         public string Description { get; set; }
         public string PIC { get; set; }
+        public string Remark { get; set; }
+
         public string DueDate { get; set; }
         public string UpdateSheduleDate { get; set; }
         public string ActualFinishDate { get; set; }

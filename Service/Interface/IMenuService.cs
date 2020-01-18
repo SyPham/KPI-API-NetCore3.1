@@ -15,7 +15,7 @@ namespace Service.Interface
 {
    public interface IMenuService: IDisposable, ICommonService<Menu>
     {
-
+        Task<List<MenuViewModel>> GetMenusAsync(int role);
 
     }
 
