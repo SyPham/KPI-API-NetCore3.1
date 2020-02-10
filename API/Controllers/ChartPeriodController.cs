@@ -128,8 +128,6 @@ namespace API.Controllers
             obj.OwnerID = userID;
             var data = await _actionPlanService.Add(obj);//(item, obj.Subject, obj.Auditor, obj.CategoryID);
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", "user", "message");
-
-
             
             return Ok(new { status = data.Status, isSendmail = true });
         }
